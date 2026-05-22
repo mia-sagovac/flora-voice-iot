@@ -1,8 +1,8 @@
 """
-FastAPI app — entry point.
+FastAPI app
 
 Pokretanje:
-    fastapi dev app/main.py
+fastapi dev app/main.py
 """
 
 from fastapi import FastAPI
