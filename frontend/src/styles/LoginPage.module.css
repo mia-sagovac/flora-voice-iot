@@ -1,0 +1,166 @@
+.page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--dew);
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.leaf1, .leaf2, .leaf3 {
+  position: absolute;
+  color: var(--leaf);
+  opacity: 0.12;
+}
+.leaf1 { width: 160px; top: -40px; right: -30px; transform: rotate(-20deg); animation: float 6s ease-in-out infinite; }
+.leaf2 { width: 120px; bottom: 40px; left: -30px; transform: rotate(40deg); animation: float 8s ease-in-out infinite reverse; }
+.leaf3 { width: 80px; top: 50%; right: 10%; transform: rotate(-60deg); animation: float 7s ease-in-out infinite 2s; }
+
+.circle1 {
+  position: absolute;
+  width: 300px; height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(90,138,60,0.08) 0%, transparent 70%);
+  top: -100px; left: -100px;
+}
+.circle2 {
+  position: absolute;
+  width: 400px; height: 400px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(74,144,196,0.06) 0%, transparent 70%);
+  bottom: -150px; right: -100px;
+}
+
+.card {
+  background: var(--paper);
+  border-radius: var(--radius-xl);
+  padding: 48px 40px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: var(--shadow-lg), 0 0 0 1px rgba(90,138,60,0.08);
+  position: relative;
+  animation: fadeUp 0.6s ease forwards;
+  text-align: center;
+}
+
+.logoWrap {
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: center;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: 2.4rem;
+  font-weight: 700;
+  color: var(--moss);
+  letter-spacing: -0.02em;
+  margin-bottom: 6px;
+}
+
+.sub {
+  font-size: 0.9rem;
+  color: var(--clay);
+  margin-bottom: 36px;
+  font-weight: 300;
+  letter-spacing: 0.02em;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  text-align: left;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--bark);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.input {
+  background: var(--dew);
+  border: 1.5px solid var(--mist);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  color: var(--soil);
+  outline: none;
+  transition: all 0.2s ease;
+}
+.input::placeholder { color: var(--clay); opacity: 0.5; }
+.input:focus {
+  border-color: var(--leaf);
+  background: white;
+  box-shadow: 0 0 0 3px rgba(90,138,60,0.1);
+}
+
+.error {
+  background: rgba(212,112,58,0.08);
+  border: 1px solid rgba(212,112,58,0.2);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  color: var(--ember);
+  text-align: center;
+}
+
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--moss);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 14px 24px;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 4px;
+  letter-spacing: 0.02em;
+}
+.btn:hover:not(:disabled) {
+  background: var(--leaf);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-leaf);
+}
+.btn:active:not(:disabled) { transform: translateY(0); }
+.btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.spinner {
+  display: inline-block;
+  width: 18px; height: 18px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+.hint {
+  margin-top: 24px;
+  font-size: 0.78rem;
+  color: var(--clay);
+  opacity: 0.7;
+}

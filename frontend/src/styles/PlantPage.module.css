@@ -1,0 +1,136 @@
+.page { max-width: 900px; animation: fadeUp 0.4s ease; }
+.header { margin-bottom: 28px; }
+.title { font-family: var(--font-display); font-size: 1.9rem; font-weight: 700; color: var(--soil); letter-spacing: -0.02em; margin-bottom: 4px; }
+.sub { font-size: 0.85rem; color: var(--clay); }
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto;
+  gap: 16px;
+}
+@media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }
+
+
+.identCard {
+  background: var(--dew);
+  border-radius: var(--radius-lg);
+  border: 1.5px solid var(--mist);
+  padding: 28px 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.plantFig { flex-shrink: 0; }
+.identity { flex: 1; }
+.nameRow { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.plantName { font-family: var(--font-display); font-size: 1.6rem; font-weight: 700; color: var(--soil); }
+.editBtn { background: none; border: none; cursor: pointer; font-size: 1rem; padding: 2px; border-radius: 4px; transition: transform 0.15s ease; }
+.editBtn:hover { transform: scale(1.2); }
+.editRow { display: flex; gap: 8px; margin-bottom: 4px; }
+.nameInput {
+  flex: 1; border: 1.5px solid var(--leaf); border-radius: var(--radius-sm);
+  padding: 6px 10px; font-family: var(--font-display); font-size: 1.1rem; color: var(--soil);
+  outline: none; background: white;
+}
+.saveBtn {
+  background: var(--moss); color: white; border: none; border-radius: var(--radius-sm);
+  padding: 6px 12px; font-size: 0.8rem; font-weight: 600; cursor: pointer;
+}
+.plantSpecies { font-size: 0.8rem; color: var(--clay); margin-bottom: 10px; }
+.moodBadge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 600;
+}
+.moodDot { width: 6px; height: 6px; border-radius: 50%; }
+
+
+.speechCard {
+  background: white;
+  border-radius: var(--radius-lg);
+  border: 1.5px solid var(--mist);
+  padding: 28px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: var(--shadow-sm);
+}
+.bubbleLabel { font-size: 0.7rem; font-weight: 700; color: var(--clay); letter-spacing: 0.1em; text-transform: uppercase; }
+.bubble {
+  background: var(--dew);
+  border-radius: var(--radius-md);
+  border-left: 4px solid var(--leaf);
+  padding: 16px 18px;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+.bubbleText {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-style: italic;
+  color: var(--bark);
+  line-height: 1.6;
+}
+.nextBtn {
+  background: none;
+  border: 1.5px solid var(--mist);
+  border-radius: var(--radius-sm);
+  padding: 8px 14px;
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--clay);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  align-self: flex-start;
+}
+.nextBtn:hover { border-color: var(--leaf); color: var(--moss); }
+
+.statsCard {
+  background: white;
+  border-radius: var(--radius-lg);
+  border: 1.5px solid var(--mist);
+  padding: 20px 24px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.statRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 9px 0;
+  border-bottom: 1px solid rgba(44,26,14,0.05);
+}
+.statRow:last-child { border-bottom: none; }
+.statLabel { font-size: 0.82rem; color: var(--clay); }
+.statVal { font-family: var(--font-mono); font-size: 0.88rem; font-weight: 500; color: var(--bark); }
+
+.notesCard {
+  background: white;
+  border-radius: var(--radius-lg);
+  border: 1.5px solid var(--mist);
+  padding: 20px 24px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.notesLabel { font-size: 0.75rem; font-weight: 700; color: var(--clay); letter-spacing: 0.07em; text-transform: uppercase; }
+.notesArea {
+  border: 1.5px solid var(--mist);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  color: var(--bark);
+  resize: vertical;
+  outline: none;
+  background: var(--dew);
+  line-height: 1.5;
+  transition: border-color 0.2s ease;
+}
+.notesArea:focus { border-color: var(--leaf); background: white; }
+.notesArea::placeholder { color: var(--clay); opacity: 0.5; }

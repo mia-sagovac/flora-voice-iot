@@ -1,0 +1,277 @@
+.page {
+  max-width: 960px;
+  animation: fadeUp 0.4s ease;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 32px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.greeting {
+  font-family: var(--font-display);
+  font-size: 1.9rem;
+  font-weight: 700;
+  color: var(--soil);
+  letter-spacing: -0.02em;
+  margin-bottom: 4px;
+}
+.date {
+  font-size: 0.85rem;
+  color: var(--clay);
+  font-weight: 300;
+}
+
+.connBadge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-family: var(--font-mono);
+  letter-spacing: 0.04em;
+}
+.connOk { background: rgba(90,138,60,0.12); color: var(--moss); }
+.connFail { background: rgba(212,112,58,0.12); color: var(--ember); }
+.connPending { background: rgba(139,95,60,0.1); color: var(--clay); }
+.connDot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: pulse-leaf 2s infinite;
+}
+
+/* Plant card */
+.plantCard {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 24px;
+  align-items: center;
+  background: var(--dew);
+  border-radius: var(--radius-lg);
+  padding: 28px 32px;
+  margin-bottom: 36px;
+  border: 1.5px solid var(--mist);
+  transition: border-color 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+.plantCard::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  background: var(--leaf);
+  transition: background 0.3s ease;
+}
+.plantCard.high::before { background: var(--ember); }
+.plantCard.medium::before { background: var(--sun); }
+.plantCard.wet::before { background: var(--water); }
+
+.plantViz {
+  position: relative;
+  width: 80px;
+}
+
+/* Water drips animation */
+.drip {
+  position: absolute;
+  width: 6px; height: 10px;
+  background: var(--water-light);
+  border-radius: 0 0 50% 50%;
+  top: 20px;
+  animation: drip 1s ease-in infinite;
+}
+.d1 { left: 30%; animation-delay: 0s; }
+.d2 { left: 55%; animation-delay: 0.3s; }
+.d3 { left: 45%; animation-delay: 0.7s; }
+
+.speechWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.speech {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.speechEmoji { font-size: 1.8rem; line-height: 1; flex-shrink: 0; }
+.speechText {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-style: italic;
+  color: var(--bark);
+  line-height: 1.5;
+  padding-top: 2px;
+}
+
+.moistureBar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.moistureLabel {
+  font-size: 0.75rem;
+  color: var(--clay);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.barTrack {
+  flex: 1;
+  height: 6px;
+  background: var(--mist);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.barFill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 1s ease;
+}
+.moistureVal {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--bark);
+  min-width: 36px;
+  text-align: right;
+}
+
+/* Section title */
+.sectionTitle {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--clay);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+  margin-top: 36px;
+}
+
+/* Sensor grid */
+.sensorGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 8px;
+}
+@media (max-width: 1024px) { .sensorGrid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 480px) { .sensorGrid { grid-template-columns: 1fr 1fr; } }
+
+.sCard {
+  background: white;
+  border-radius: var(--radius-md);
+  padding: 20px 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid rgba(44,26,14,0.06);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.sCard:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+.sCardIcon { font-size: 1.6rem; flex-shrink: 0; }
+.sCardVal {
+  font-family: var(--font-mono);
+  font-size: 1.25rem;
+  font-weight: 500;
+  line-height: 1;
+  margin-bottom: 3px;
+}
+.sCardLabel { font-size: 0.82rem; font-weight: 600; color: var(--bark); margin-bottom: 1px; }
+.sCardSub { font-size: 0.72rem; color: var(--clay); opacity: 0.7; }
+
+/* Water panel */
+.waterPanel {
+  background: white;
+  border-radius: var(--radius-md);
+  padding: 24px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid rgba(44,26,14,0.06);
+  flex-wrap: wrap;
+}
+.waterInfo {
+  display: flex;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+.waterStat { display: flex; flex-direction: column; gap: 3px; }
+.waterStatLabel {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--clay);
+  font-weight: 600;
+}
+.waterStatVal {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--bark);
+}
+.pumpBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--water);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 12px 22px;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.pumpBtn:hover:not(:disabled) {
+  background: #3a7ab0;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(74,144,196,0.4);
+}
+.pumpBtn:disabled { opacity: 0.65; cursor: not-allowed; }
+.pumpActive { animation: pulse-leaf 1.5s infinite; }
+.pumpBtnIcon { font-size: 1rem; }
+
+/* Status row */
+.statusRow {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  min-width: 130px;
+}
+.chipOk { background: rgba(90,138,60,0.1); border: 1px solid rgba(90,138,60,0.2); }
+.chipFail { background: rgba(212,112,58,0.08); border: 1px solid rgba(212,112,58,0.18); }
+.chipDot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.chipOk .chipDot { background: var(--leaf); }
+.chipFail .chipDot { background: var(--ember); }
+.chipLabel { font-size: 0.8rem; font-weight: 700; color: var(--bark); margin-bottom: 1px; }
+.chipDesc { font-size: 0.7rem; color: var(--clay); }

@@ -2,9 +2,9 @@ import httpx
 
 # IZBRISATI CIJELI FILE KASNIJE
 
-BASE = "" # staviti localhost
-USERNAME = "" # moj FER mail
-PASSWORD = "" # sifra iz maila
+BASE = "http://127.0.0.1:8000" # staviti localhost
+USERNAME = "jakov.lovakovic@fer.hr" # moj FER mail
+PASSWORD = "BiljkeSuZakon" # sifra iz maila
 
 # login
 login_response = httpx.post(

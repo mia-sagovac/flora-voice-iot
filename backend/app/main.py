@@ -8,7 +8,8 @@ fastapi dev app/main.py
 from fastapi import FastAPI
 
 from app.config import settings
-from app.routers import auth, test
+from app.routers import test
+from app.routers import auth
 
 app = FastAPI(
     title="FastAPI + ThingsBoard",

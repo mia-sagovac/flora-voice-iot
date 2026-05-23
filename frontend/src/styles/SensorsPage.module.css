@@ -1,0 +1,67 @@
+.page { max-width: 900px; animation: fadeUp 0.4s ease; }
+.header { margin-bottom: 28px; }
+.title { font-family: var(--font-display); font-size: 1.9rem; font-weight: 700; color: var(--soil); letter-spacing: -0.02em; margin-bottom: 4px; }
+.sub { font-size: 0.85rem; color: var(--clay); }
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.tab {
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1.5px solid var(--mist);
+  background: white;
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--clay);
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+.tab:hover { border-color: var(--leaf); color: var(--moss); }
+.tabActive { background: var(--moss); border-color: var(--moss); color: white; font-weight: 600; }
+
+.chartCard {
+  background: white;
+  border-radius: var(--radius-md);
+  padding: 24px 16px 16px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid rgba(44,26,14,0.06);
+  margin-bottom: 24px;
+}
+
+.tableWrap {
+  background: white;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid rgba(44,26,14,0.06);
+}
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+.table th {
+  background: var(--dew);
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--clay);
+  font-weight: 700;
+  border-bottom: 1px solid var(--mist);
+}
+.table td {
+  padding: 11px 16px;
+  color: var(--bark);
+  border-bottom: 1px solid rgba(44,26,14,0.04);
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+}
+.table tr:last-child td { border-bottom: none; }
+.table tr:hover td { background: var(--dew); }

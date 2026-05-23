@@ -1,0 +1,137 @@
+.shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 240px;
+  min-height: 100vh;
+  background: var(--soil);
+  display: flex;
+  flex-direction: column;
+  padding: 24px 16px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px 24px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  margin-bottom: 12px;
+}
+
+.brandName {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--mist);
+  letter-spacing: -0.01em;
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  color: rgba(200,224,180,0.55);
+  text-decoration: none;
+  font-size: 0.88rem;
+  font-weight: 500;
+  transition: all 0.18s ease;
+  letter-spacing: 0.01em;
+}
+.navItem:hover {
+  background: rgba(90,138,60,0.15);
+  color: var(--mist);
+}
+.navItem.active {
+  background: rgba(90,138,60,0.25);
+  color: var(--sprout);
+  font-weight: 600;
+}
+
+.navIcon {
+  opacity: 0.8;
+  flex-shrink: 0;
+  display: flex;
+}
+.navItem.active .navIcon { opacity: 1; }
+
+.navLabel {}
+
+.footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  margin-top: 12px;
+}
+
+.userChip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  overflow: hidden;
+}
+
+.avatar {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.userName {
+  font-size: 0.8rem;
+  color: rgba(200,224,180,0.5);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.logoutBtn {
+  background: none;
+  border: none;
+  color: rgba(200,224,180,0.35);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: var(--radius-sm);
+  transition: all 0.15s ease;
+  display: flex;
+  flex-shrink: 0;
+}
+.logoutBtn:hover {
+  background: rgba(212,112,58,0.15);
+  color: var(--ember);
+}
+
+.main {
+  flex: 1;
+  padding: 32px 36px;
+  background: var(--paper);
+  overflow-y: auto;
+  min-height: 100vh;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    display: none;
+  }
+  .main {
+    padding: 20px 16px;
+  }
+}
