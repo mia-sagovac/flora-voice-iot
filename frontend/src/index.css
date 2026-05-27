@@ -52,6 +52,14 @@ body {
   overflow-x: hidden;
 }
 
+.fa-solid,
+.fa-regular,
+.fa-light,
+.fa-duotone,
+.fa-brands {
+  color: var(--leaf);
+}
+
 #root {
   min-height: 100vh;
   display: flex;
