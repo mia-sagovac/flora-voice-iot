@@ -15,13 +15,13 @@
 
 
 
-// const char *ssid = "WIFI";
-// const char *password = "WIFI_PASSWORD";
+const char *ssid = "iPhone Adam";
+const char *password = "sw49mfh7s5ppe";
 const char* MQTT_server = "http://161.53.133.253:8080";  
 const int MQTT_port = 1883;
 const char* MQTT_topic = "v1/devices/me/telemetry";
 
-int PIR_OUT_GPIO_pin = 13;
+int PIR_OUT_GPIO_pin =4 ;
 
 WiFiClient espClient;
 PubSubClient client(espClient);
