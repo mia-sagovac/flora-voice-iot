@@ -3,7 +3,7 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
-    thingsboard_url: str = "https://eu.thingsboard.cloud"
+    thingsboard_url: str = "http://161.53.133.253:8080"
     thingsboard_username: str = ""  # iz .env
     thingsboard_password: str = ""  # iz .env
     request_timeout: float = 10.0

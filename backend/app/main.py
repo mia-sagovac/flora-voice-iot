@@ -11,6 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.routers import test
 from app.routers import auth
+from app.routers import sensors
 
 app = FastAPI(
     title="FastAPI + ThingsBoard",
@@ -29,7 +30,7 @@ app.add_middleware(
 # Registriraj routere
 app.include_router(auth.router)
 app.include_router(test.router)
-
+app.include_router(sensors.router)
 
 @app.get("/", tags=["meta"])
 def root():
