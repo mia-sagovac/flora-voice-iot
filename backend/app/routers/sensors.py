@@ -3,6 +3,7 @@ from app.dependencies import oauth2_scheme
 from app.schemas import SensorResponse, SensorData
 from app.thingsboard import tb_client
 from app.connectionmanager import manager
+import asyncio
 
 router = APIRouter(prefix="/sensors", tags=["sensors"])
 
@@ -75,3 +76,26 @@ async def trigger_pump(device_id: str, token: str = Depends(oauth2_scheme)):
     # isto kao i CURL koji smo koristili dok smo koristili dok smo sve ovo testirali (oni u terminalu)
     await tb_client.set_device_attributes(token, device_id, {"triggerWatering": True})
     return {"status": "ok", "device_id": device_id}
+
+@router.get("/overview")
+async def get_overview(token: str = Depends(oauth2_scheme)):
+    user = await tb_client.get_user(token)
+    customer_id = user.get("customerId", {}).get("id")
+    if not customer_id:
+        raise HTTPException(status_code=400, detail="korisnik nije customer user")
+
+    devices = await tb_client.get_customer_devices(token, customer_id)
+
+    async def one(d):
+        dev_id = d["id"]["id"]
+        telemetry = {}
+        try:
+            keys = await tb_client.get_timeseries_keys(token, dev_id)
+            if keys:
+                telemetry = await tb_client.get_latest_telemetry(token, dev_id, ",".join(keys))
+        except HTTPException:
+            pass  # jedan uredjaj padne -> ne rusi cijeli odgovor
+        return {"id": dev_id, "name": d["name"], "telemetry": telemetry}
+
+    results = await asyncio.gather(*[one(d) for d in devices])
+    return {"customer_id": customer_id, "devices": results}

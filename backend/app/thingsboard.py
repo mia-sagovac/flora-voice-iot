@@ -114,6 +114,44 @@ class ThingsBoardClient:
         if response.status_code != 200:
             # 403 = korisnik nema pravo na taj uredjaj
             raise HTTPException(status_code=response.status_code, detail="ne mogu poslati naredbu pumpi")
+        
+    async def get_timeseries_keys(self, token: str, device_id: str) -> list[str]:
+        """Dobivam koje telemetrijske kljuceve uredjaj uopce ima."""
+        async with httpx.AsyncClient(timeout=self.timeout) as client:
+            try:
+                response = await client.get(
+                    f"{self.base_url}/api/plugins/telemetry/DEVICE/{device_id}/keys/timeseries",
+                    headers={"X-Authorization": f"Bearer {token}"},
+                )
+            except httpx.RequestError as e:
+                raise HTTPException(status_code=503, detail=f"greska: {e}")
+        return response.json() if response.status_code == 200 else []
+    
+    async def get_latest_telemetry(self, token: str, device_id: str, keys: str) -> dict:
+        """Dobivam zadnje vrijednost po kljucu, splosteno u {kljuc: vrijednost}."""
+        async with httpx.AsyncClient(timeout=self.timeout) as client:
+            try:
+                response = await client.get(
+                    f"{self.base_url}/api/plugins/telemetry/DEVICE/{device_id}/values/timeseries",
+                    params={"keys": keys},
+                    headers={"X-Authorization": f"Bearer {token}"},
+                )
+            except httpx.RequestError as e:
+                raise HTTPException(status_code=503, detail=f"greska: {e}")
+        if response.status_code != 200:
+            raise HTTPException(status_code=response.status_code, detail="ne mogu dohvatiti telemetriju")
+
+        raw = response.json() # ovo je oblik koji se dobi {"temperature": [{"ts": 1700000, "value": "24.5"}], ...}
+        out = {}
+        for key, parts in raw.items():
+            if parts:
+                v = parts[0]["value"]
+                try:
+                    v = float(v)
+                except (TypeError, ValueError):
+                    pass
+                out[key] = v
+        return out
 
 tb_client = ThingsBoardClient(
     base_url=settings.thingsboard_url,
