@@ -1,4 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { fetchMyDevices, fetchSensorTelemetry } from '../api/client'
+import { useLiveTelemetry } from '../api/useLiveTelemetry'
 import styles from '../styles/PlantPage.module.css'
 
 const MESSAGES = [
@@ -30,22 +32,71 @@ function getMessages(moisture) {
   return MESSAGES.find(m => moisture >= m.soil[0] && moisture < m.soil[1]) || MESSAGES[2]
 }
 
-const PLANT_NAMES = ['Zelen', 'Cvjetko', 'Listko', 'Fikus', 'Miki']
-
 export default function PlantPage() {
-  const [moisture] = useState(55)
-  const [plantName, setPlantName] = useState('Zelen')
+  const { latest, connected } = useLiveTelemetry()
+  const [device, setDevice] = useState(null)
+  const [sensors, setSensors] = useState({ soilMoisture: null, airTemp: null, airHumidity: null, lightLevel: null, lastWatered: '--' })
+  const [plantName, setPlantName] = useState(() => localStorage.getItem('plantName') || 'Zelen')
   const [editing, setEditing] = useState(false)
-  const [nameInput, setNameInput] = useState(plantName)
+  const [nameInput, setNameInput] = useState(() => localStorage.getItem('plantName') || 'Zelen')
   const [msgIdx, setMsgIdx] = useState(0)
-  const [notes, setNotes] = useState('')
+  const [notes, setNotes] = useState(() => localStorage.getItem('plantNotes') || '')
+  const [connectionOk, setConnectionOk] = useState(null)
+  const [pumpError, setPumpError] = useState(null)
 
-  const group = getMessages(moisture)
+  const group = getMessages(sensors.soilMoisture ?? 0)
   const currentMsg = group.msgs[msgIdx % group.msgs.length]
+
+  useEffect(() => {
+    localStorage.setItem('plantName', plantName)
+    setNameInput(plantName)
+  }, [plantName])
+
+  useEffect(() => {
+    localStorage.setItem('plantNotes', notes)
+  }, [notes])
+
+  useEffect(() => {
+    fetchMyDevices()
+      .then(res => {
+        const list = res.data.devices || []
+        if (list.length) setDevice(list[0])
+        setConnectionOk(true)
+      })
+      .catch(() => setConnectionOk(false))
+  }, [])
+
+  useEffect(() => {
+    if (!device) return
+    fetchSensorTelemetry(device.id)
+      .then(res => {
+        const d = res.data?.data || {}
+        setSensors(s => ({
+          ...s,
+          soilMoisture: d.groundHumidity ?? s.soilMoisture,
+          airTemp: d.temperature ?? s.airTemp,
+          airHumidity: d.humidity ?? s.airHumidity,
+        }))
+      })
+      .catch(() => {})
+  }, [device])
+
+  useEffect(() => {
+    if (!latest?.data) return
+    if (device && latest.device_id && latest.device_id !== device.id) return
+    const d = latest.data
+    setSensors(s => ({
+      ...s,
+      soilMoisture: d.groundHumidity ?? s.soilMoisture,
+      airTemp: d.temperature ?? s.airTemp,
+      airHumidity: d.humidity ?? s.airHumidity,
+    }))
+  }, [latest, device])
 
   const nextMsg = () => setMsgIdx(i => i + 1)
   const saveName = () => {
-    setPlantName(nameInput || plantName)
+    const name = nameInput.trim() || plantName
+    setPlantName(name)
     setEditing(false)
   }
 
@@ -110,23 +161,31 @@ export default function PlantPage() {
         <div className={styles.statsCard}>
           <div className={styles.statRow}>
             <span className={styles.statLabel}>Vlažnost tla</span>
-            <span className={styles.statVal}>{moisture}%</span>
+            <span className={styles.statVal}>{sensors.soilMoisture != null ? `${Math.round(sensors.soilMoisture)}%` : '--'}</span>
           </div>
           <div className={styles.statRow}>
             <span className={styles.statLabel}>Temperatura</span>
-            <span className={styles.statVal}>22.4°C</span>
+            <span className={styles.statVal}>{sensors.airTemp != null ? `${sensors.airTemp.toFixed(1)}°C` : '--'}</span>
           </div>
           <div className={styles.statRow}>
             <span className={styles.statLabel}>Vlaga zraka</span>
-            <span className={styles.statVal}>58%</span>
+            <span className={styles.statVal}>{sensors.airHumidity != null ? `${sensors.airHumidity}%` : '--'}</span>
           </div>
           <div className={styles.statRow}>
             <span className={styles.statLabel}>Svjetlost</span>
-            <span className={styles.statVal}>680 lux</span>
+            <span className={styles.statVal}>{sensors.lightLevel != null ? `${sensors.lightLevel} lux` : '--'}</span>
           </div>
           <div className={styles.statRow}>
             <span className={styles.statLabel}>Zadnje zalijevanje</span>
-            <span className={styles.statVal}>Prije 2h</span>
+            <span className={styles.statVal}>{sensors.lastWatered}</span>
+          </div>
+          <div className={styles.statRow}>
+            <span className={styles.statLabel}>Live veza</span>
+            <span className={styles.statVal}>{connected ? 'Uživo' : 'Nije spojen'}</span>
+          </div>
+          <div className={styles.statRow}>
+            <span className={styles.statLabel}>Backend</span>
+            <span className={styles.statVal}>{connectionOk === true ? 'Aktivan' : connectionOk === false ? 'Nedostupan' : '...'}</span>
           </div>
         </div>
 

@@ -30,7 +30,6 @@ export default function App() {
           <Route path="/sensors"   element={<Protected><SensorsPage /></Protected>} />
           <Route path="/weather"   element={<Protected><WeatherPage /></Protected>} />
           <Route path="/watering"  element={<Protected><WateringPage /></Protected>} />
-          <Route path="/settings"  element={<Protected><SettingsPage /></Protected>} />
           <Route path="*"          element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </BrowserRouter>

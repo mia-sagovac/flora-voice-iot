@@ -25,7 +25,6 @@ export default function WeatherPage() {
           <strong>WeatherAPI nije konfiguriran</strong>
           <p>Unesi API ključ u Postavkama za aktivaciju integracije.</p>
         </div>
-        <a href="/settings" className={styles.bannerLink}>Postavi →</a>
       </div>
 
       <div className={styles.sectionTitle}>Demo prognoza — Slavonski Brod</div>

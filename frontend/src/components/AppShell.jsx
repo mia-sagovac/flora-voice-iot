@@ -8,7 +8,6 @@ const NAV = [
   { to: '/sensors',   icon: <SensorIcon />, label: 'Senzori' },
   { to: '/weather',   icon: <WeatherIcon />, label: 'Vremenska' },
   { to: '/watering',  icon: <WaterIcon />, label: 'Zalijevanje' },
-  { to: '/settings',  icon: <SettingsIcon />, label: 'Postavke' },
 ]
 
 export default function AppShell({ children }) {
@@ -87,9 +86,6 @@ function WeatherIcon() {
 }
 function WaterIcon() {
   return <i className="fa-solid fa-droplet" aria-hidden="true" />
-}
-function SettingsIcon() {
-  return <i className="fa-solid fa-gear" aria-hidden="true" />
 }
 function LogoutIcon() {
   return <i className="fa-solid fa-right-from-bracket" aria-hidden="true" />
