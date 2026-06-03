@@ -89,6 +89,17 @@ class ThingsBoardClient:
             )
 
         return response.json()
+    
+    async def get_customer_devices(self, token: str, customer_id: str) -> list[dict]:
+        async with httpx.AsyncClient(timeout=self.timeout) as client:
+            response = await client.get(
+                f"{self.base_url}/api/customer/{customer_id}/devices",
+                params={"pageSize": 1000, "page": 0},
+                headers={"X-Authorization": f"Bearer {token}"},
+            )
+        if response.status_code != 200:
+            raise HTTPException(status_code=400, detail="ne mogu dohvatiti uređaje")
+        return response.json()["data"]
 
 tb_client = ThingsBoardClient(
     base_url=settings.thingsboard_url,

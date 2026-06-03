@@ -1,15 +1,15 @@
-
 from fastapi import APIRouter, Depends, Request, WebSocket, WebSocketDisconnect
 from app.dependencies import oauth2_scheme
 from app.schemas import SensorResponse, SensorData
 from app.thingsboard import tb_client
+from app.connectionmanager import manager
 
 router = APIRouter(prefix="/sensors", tags=["sensors"])
 
-
+"""
 @router.get("/{device_id}/telemetry", response_model=SensorResponse)
 async def get_sensor_data(device_id: str, token: str = Depends(oauth2_scheme)):
-
+    print("kj<ydglvkydxfugilhlkjdfghkjldsgfčhuogsr")
     keys = "temperature,humidity,groundHumidity"
 
     raw_data = await tb_client.get_sensor_data(token, device_id, keys)
@@ -32,29 +32,7 @@ async def get_sensor_data(device_id: str, token: str = Depends(oauth2_scheme)):
         device_id=device_id,
         data=SensorData(temperature=temp, humidity=hum, groundHumidity=grHum)
     )
-
-
-
-
-
-class ConnectionManager:
-    def __init__(self):
-        self.active_connections: list[WebSocket] = []
-
-    async def connect(self, websocket: WebSocket):
-        await websocket.accept()
-        self.active_connections.append(websocket)
-
-    def disconnect(self, websocket: WebSocket):
-        self.active_connections.remove(websocket)
-
-    async def broadcast(self, message: dict):
-        """Šalje podatke svim spojenim frontend klijentima u stvarnom vremenu"""
-        for connection in self.active_connections:
-            await connection.send_json(message)
-
-manager = ConnectionManager()
-
+"""
 
 @router.post("/webhook/telemetry")
 async def receive_telemetry_webhook(request: Request):
@@ -67,10 +45,6 @@ async def receive_telemetry_webhook(request: Request):
 
     return {"status": "success"}
 
-
-
-
-
 @router.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await manager.connect(websocket)
@@ -81,5 +55,3 @@ async def websocket_endpoint(websocket: WebSocket):
     except WebSocketDisconnect:
         manager.disconnect(websocket)
         print("Frontend se odspojio.")
-
-
