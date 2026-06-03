@@ -72,7 +72,10 @@ export default function DashboardPage() {
 
   const triggerWatering = () => {
     setWateringNow(true)
-    setTimeout(() => setWateringNow(false), 4000)
+    setTimeout(() => {
+      setWateringNow(false)
+      window.location.reload()
+    }, 4000)
   }
 
   const now = new Date()
