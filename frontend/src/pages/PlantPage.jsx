@@ -35,6 +35,7 @@ function getMessages(moisture) {
 export default function PlantPage() {
   const { latest } = useLiveTelemetry()
   const [plants, setPlants] = useState([])
+  const [messageIndexByPlant, setMessageIndexByPlant] = useState({})
 
   useEffect(() => {
     fetchOverview()
@@ -69,9 +70,18 @@ export default function PlantPage() {
     return { label: 'Prezasićena', mood: 'wet', color: 'var(--water)' }
   }
 
-  const plantMessage = (soilMoisture) => {
+  const getPlantMessage = (soilMoisture, plantId) => {
     const msgs = getMessages(soilMoisture).msgs
-    return msgs[0] || ''
+    const index = messageIndexByPlant[plantId] ?? 0
+    return msgs[index % msgs.length] || ''
+  }
+
+  const nextPlantMessage = (plantId, soilMoisture) => {
+    const msgs = getMessages(soilMoisture).msgs
+    setMessageIndexByPlant(prev => ({
+      ...prev,
+      [plantId]: ((prev[plantId] ?? 0) + 1) % msgs.length,
+    }))
   }
 
   return (
@@ -124,7 +134,16 @@ export default function PlantPage() {
               <div className={styles.plantCardRight}>
                 <div className={styles.bubbleLabel}>Što biljka govori</div>
                 <div className={styles.bubbleSmall}>
-                  <p className={styles.bubbleText}>{plantMessage(soil)}</p>
+                  <div>
+                    <p className={styles.bubbleText}>{getPlantMessage(soil, plant.id)}</p>
+                  </div>
+                  <button
+                    type="button"
+                    className={styles.messageButton}
+                    onClick={() => nextPlantMessage(plant.id, soil)}
+                  >
+                    Sljedeća poruka
+                  </button>
                 </div>
               </div>
             </article>
