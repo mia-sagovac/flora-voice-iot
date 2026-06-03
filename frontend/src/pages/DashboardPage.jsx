@@ -1,37 +1,55 @@
 import { useState, useEffect } from 'react'
-import { fetchTestData } from '../api/client'
+import { fetchTestData, fetchSensorTelemetry } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import styles from '../styles/DashboardPage.module.css'
 
-// simulirani podaci, treba zamijeniti sa pravom telemetrijom!!
 function useSensorData() {
   const [data, setData] = useState({
-    soilMoisture: 42,
-    airTemp: 22.4,
-    airHumidity: 58,
-    lightLevel: 680,
-    lastWatered: '2 sata',
+    soilMoisture: null,
+    airTemp: null,
+    airHumidity: null,
+    lastWatered: '--',
     pumpActive: false,
   })
+  const [error, setError] = useState(null)
 
-  // simularine male fluktuacije
   useEffect(() => {
-    const id = setInterval(() => {
-      setData(d => ({
-        ...d,
-        soilMoisture: Math.max(10, Math.min(90, d.soilMoisture + (Math.random() - 0.5) * 2)),
-        airTemp: +(d.airTemp + (Math.random() - 0.5) * 0.3).toFixed(1),
-        airHumidity: Math.max(20, Math.min(95, Math.round(d.airHumidity + (Math.random() - 0.5)))),
-        lightLevel: Math.max(0, Math.round(d.lightLevel + (Math.random() - 0.5) * 20)),
-      }))
-    }, 3000)
-    return () => clearInterval(id)
+    let mounted = true
+
+    const load = async () => {
+      try {
+        const response = await fetchSensorTelemetry()
+        const sensor = response.data?.data || {}
+
+        if (!mounted) return
+
+        setData({
+          soilMoisture: sensor.groundHumidity ?? null,
+          airTemp: sensor.temperature ?? null,
+          airHumidity: sensor.humidity ?? null,
+          lastWatered: '--',
+          pumpActive: false,
+        })
+        setError(null)
+      } catch (err) {
+        if (!mounted) return
+        setError('Ne mogu dohvatiti live senzore')
+      }
+    }
+
+    load()
+    const interval = setInterval(load, 10000)
+    return () => {
+      mounted = false
+      clearInterval(interval)
+    }
   }, [])
 
-  return data
+  return { ...data, error }
 }
 
 function getPlantMood(soil) {
+  if (soil == null) return { emoji: '🤔', msg: 'Čekam live senzore...', color: 'var(--water)', urgency: 'wet' }
   if (soil < 25) return { emoji: '😰', msg: 'Žedan sam, zalij me!', color: 'var(--ember)', urgency: 'high' }
   if (soil < 40) return { emoji: '😕', msg: 'Pomalo bih se osvježio...', color: 'var(--sun)', urgency: 'medium' }
   if (soil < 70) return { emoji: '😊', msg: 'Savršeno! Osjećam se odlično.', color: 'var(--leaf)', urgency: 'good' }
@@ -107,10 +125,9 @@ export default function DashboardPage() {
       {/* grid senzora */}
       <div className={styles.sectionTitle}>Senzori — uživo</div>
       <div className={styles.sensorGrid}>
-        <SensorCard icon={<i className="fa-solid fa-thermometer-half" aria-hidden="true" />} label="Temperatura" value={`${sensors.airTemp}°C`} sub="Zrak" color="var(--ember)" />
-        <SensorCard icon={<i className="fa-solid fa-droplet" aria-hidden="true" />} label="Vlaga zraka" value={`${sensors.airHumidity}%`} sub="Rel. vlažnost" color="var(--water)" />
-        <SensorCard icon={<i className="fa-solid fa-sun" aria-hidden="true" />} label="Svjetlost" value={sensors.lightLevel} sub="Lux (LDR)" color="var(--sun)" />
-        <SensorCard icon={<i className="fa-solid fa-seedling" aria-hidden="true" />} label="Vlažnost tla" value={`${Math.round(sensors.soilMoisture)}%`} sub="ESP32 sensor" color="var(--leaf)" />
+        <SensorCard icon={<i className="fa-solid fa-thermometer-half" aria-hidden="true" />} label="Temperatura" value={`${sensors.airTemp ?? '--'}°C`} sub="Zrak" color="var(--ember)" />
+        <SensorCard icon={<i className="fa-solid fa-droplet" aria-hidden="true" />} label="Vlaga zraka" value={`${sensors.airHumidity ?? '--'}%`} sub="Rel. vlažnost" color="var(--water)" />
+        <SensorCard icon={<i className="fa-solid fa-seedling" aria-hidden="true" />} label="Vlažnost tla" value={`${sensors.soilMoisture != null ? Math.round(sensors.soilMoisture) : '--'}%`} sub="ESP32 sensor" color="var(--leaf)" />
       </div>
 
       {/* upravljanje zalijevanjem */}

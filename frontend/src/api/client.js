@@ -39,6 +39,7 @@ export const login = (username, password) =>
 
 // ─── Protected test endpoint ─────────────────────────
 export const fetchTestData = () => api.get('/test')
+export const fetchSensorTelemetry = () => api.get('/sensors/telemetry')
 
 // ─── Helpers ─────────────────────────────────────────
 export const healthCheck = () => api.get('/')
