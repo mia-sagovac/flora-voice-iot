@@ -39,7 +39,10 @@ export const login = (username, password) =>
 
 // ─── Protected test endpoint ─────────────────────────
 export const fetchTestData = () => api.get('/test')
-export const fetchSensorTelemetry = () => api.get('/sensors/telemetry')
 
 // ─── Helpers ─────────────────────────────────────────
 export const healthCheck = () => api.get('/')
+
+export const fetchMyDevices = () => api.get('/sensors/devices')
+export const fetchSensorTelemetry = (deviceId) => api.get(`/sensors/${deviceId}/telemetry`)
+export const triggerPump = (deviceId) => api.post(`/sensors/${deviceId}/pump`)
