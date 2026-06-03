@@ -63,7 +63,7 @@ export default function DashboardPage() {
   }, [latest, device])
 
   useEffect(() => {
-    const refreshId = setInterval(() => window.location.reload(), 4000)
+    const refreshId = setInterval(() => window.location.reload(), 10000)
     return () => clearInterval(refreshId)
   }, [])
 

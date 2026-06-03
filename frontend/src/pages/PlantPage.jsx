@@ -107,6 +107,11 @@ export default function PlantPage() {
     wet: 'var(--water)',
   }
 
+  useEffect(() => {
+    const refreshId = setInterval(() => window.location.reload(), 10000)
+    return () => clearInterval(refreshId)
+  }, [])
+
   return (
     <div className={styles.page}>
       <div className={styles.header}>
@@ -170,14 +175,6 @@ export default function PlantPage() {
           <div className={styles.statRow}>
             <span className={styles.statLabel}>Vlaga zraka</span>
             <span className={styles.statVal}>{sensors.airHumidity != null ? `${sensors.airHumidity}%` : '--'}</span>
-          </div>
-          <div className={styles.statRow}>
-            <span className={styles.statLabel}>Svjetlost</span>
-            <span className={styles.statVal}>{sensors.lightLevel != null ? `${sensors.lightLevel} lux` : '--'}</span>
-          </div>
-          <div className={styles.statRow}>
-            <span className={styles.statLabel}>Zadnje zalijevanje</span>
-            <span className={styles.statVal}>{sensors.lastWatered}</span>
           </div>
           <div className={styles.statRow}>
             <span className={styles.statLabel}>Live veza</span>
