@@ -15,3 +15,13 @@ class TestResponse(BaseModel):
 
     message: str
     email: str | None = None
+
+class SensorData(BaseModel):
+    temperature: float | None = None
+    humidity: float | None = None
+    groundHumidity: float | None = None
+
+class SensorResponse(BaseModel):
+    device_id: str
+    data: SensorData
+

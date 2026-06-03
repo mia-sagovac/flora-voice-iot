@@ -67,6 +67,29 @@ class ThingsBoardClient:
 
         return response.json() # isto vraca dict s info o korisniku
 
+    async def get_sensor_data(self, token: str, device_id: str, keys: str) -> dict:
+
+        async with httpx.AsyncClient(timeout=self.timeout) as client:
+            try:
+                response = await client.get(
+                    f"{self.base_url}/api/plugins/telemetry/DEVICE/{device_id}/values/timeseries",
+                    params={"keys": keys},
+                    headers={"X-Authorization": f"Bearer {token}"},
+                )
+            except httpx.RequestError as e:
+                raise HTTPException(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    detail=f"error fetching sensor data: {e}",
+                )
+
+        if response.status_code != 200:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"error fetching thingsboard data: {response.status_code}",
+            )
+
+        return response.json()
+
 tb_client = ThingsBoardClient(
     base_url=settings.thingsboard_url,
     timeout=settings.request_timeout,
