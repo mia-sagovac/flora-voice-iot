@@ -9,7 +9,7 @@ router = APIRouter(prefix="/sensors", tags=["sensors"])
 @router.get("/{device_id}/telemetry", response_model=SensorResponse)
 async def get_sensor_data(device_id: str, token: str = Depends(oauth2_scheme)):
     keys = "temperature,humidity,groundHumidity"
-    raw = await tb_client.get_sensor_data(token, device_id, keys)  # TB enforca pristup
+    raw = await tb_client.get_sensor_data(token, device_id, keys) # TB enforca pristup
  
     def first(key):
         vals = raw.get(key)
@@ -27,9 +27,9 @@ async def get_sensor_data(device_id: str, token: str = Depends(oauth2_scheme)):
 @router.post("/webhook/telemetry")
 async def receive_telemetry_webhook(request: Request, device: str = "unknown"):
     payload = await request.json()
-    device_id = manager.resolve(device)  # ime -> id
+    device_id = manager.resolve(device) # ime -> id
     print(f"STIGLO za '{device}' (id={device_id}): {payload}")
-    if device_id:  # rutiraj po id-u samo onima koji taj uredjaj smiju vidjeti
+    if device_id: # rutiraj po id-u samo onima koji taj uredjaj smiju vidjeti
         await manager.send_to_device_id(
             device_id, {"device_id": device_id, "device": device, "data": payload}
         )
@@ -42,10 +42,10 @@ async def websocket_endpoint(websocket: WebSocket):
  
     try:
         user = await tb_client.get_user(token) # validira token
-        customer_id = user["customerId"]["id"] # iz tokena, ne od klijenta
+        customer_id = user["customerId"]["id"] # iz tokena dobim customer_id
         devices = await tb_client.get_customer_devices(token, customer_id)
     except (HTTPException, KeyError, TypeError):
-        await websocket.close(code=1008) # nevazeci token / nije customer
+        await websocket.close(code=1008) # nevazeci token
         return
  
     manager.connect(websocket, devices)
@@ -72,6 +72,6 @@ async def list_my_devices(token: str = Depends(oauth2_scheme)):
 
 @router.post("/{device_id}/pump")
 async def trigger_pump(device_id: str, token: str = Depends(oauth2_scheme)):
-    # isto kao tvoj curl: POST atributa u SERVER_SCOPE
+    # isto kao i CURL koji smo koristili dok smo koristili dok smo sve ovo testirali (oni u terminalu)
     await tb_client.set_device_attributes(token, device_id, {"triggerWatering": True})
     return {"status": "ok", "device_id": device_id}
