@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { fetchOverview, fetchSensorTelemetry } from '../api/client'
+import { fetchOverview } from '../api/client'
 import { useLiveTelemetry } from '../api/useLiveTelemetry'
 import styles from '../styles/PlantPage.module.css'
 
@@ -33,35 +33,8 @@ function getMessages(moisture) {
 }
 
 export default function PlantPage() {
-  const { latest, connected } = useLiveTelemetry()
+  const { latest } = useLiveTelemetry()
   const [plants, setPlants] = useState([])
-  const [selectedDevice, setSelectedDevice] = useState(null)
-  const [sensors, setSensors] = useState({ soilMoisture: null, airTemp: null, airHumidity: null, lightLevel: null, lastWatered: '--' })
-  const [plantName, setPlantName] = useState(() => localStorage.getItem('plantName') || 'Zelen')
-  const [editing, setEditing] = useState(false)
-  const [nameInput, setNameInput] = useState(() => localStorage.getItem('plantName') || 'Zelen')
-  const [msgIdx, setMsgIdx] = useState(0)
-  const [notes, setNotes] = useState(() => localStorage.getItem('plantNotes') || '')
-  const [connectionOk, setConnectionOk] = useState(null)
-  const [pumpError, setPumpError] = useState(null)
-
-  const group = getMessages(sensors.soilMoisture ?? 0)
-  const currentMsg = group.msgs[msgIdx % group.msgs.length]
-
-  const normalizeTelemetry = (telemetry = {}) => ({
-    soilMoisture: telemetry.groundHumidity ?? null,
-    airTemp: telemetry.temperature ?? null,
-    airHumidity: telemetry.humidity ?? null,
-  })
-
-  useEffect(() => {
-    localStorage.setItem('plantName', plantName)
-    setNameInput(plantName)
-  }, [plantName])
-
-  useEffect(() => {
-    localStorage.setItem('plantNotes', notes)
-  }, [notes])
 
   useEffect(() => {
     fetchOverview()
@@ -71,25 +44,9 @@ export default function PlantPage() {
           telemetry: device.telemetry || {},
         }))
         setPlants(list)
-        if (list.length) {
-          setSelectedDevice(list[0])
-          setSensors(prev => ({
-            ...prev,
-            ...normalizeTelemetry(list[0].telemetry),
-          }))
-        }
-        setConnectionOk(true)
       })
-      .catch(() => setConnectionOk(false))
+      .catch(() => setPlants([]))
   }, [])
-
-  useEffect(() => {
-    if (!selectedDevice) return
-    setSensors(prev => ({
-      ...prev,
-      ...normalizeTelemetry(selectedDevice.telemetry),
-    }))
-  }, [selectedDevice])
 
   useEffect(() => {
     if (!latest?.data) return
@@ -102,158 +59,79 @@ export default function PlantPage() {
           : plant
       )
     )
-    if (selectedDevice?.id === deviceId) {
-      setSensors(prev => ({
-        ...prev,
-        soilMoisture: telemetry.groundHumidity ?? prev.soilMoisture,
-        airTemp: telemetry.temperature ?? prev.airTemp,
-        airHumidity: telemetry.humidity ?? prev.airHumidity,
-      }))
-    }
-  }, [latest, selectedDevice])
+  }, [latest])
 
-  const selectPlant = (plant) => {
-    setSelectedDevice(plant)
+  const getPlantStatus = (soilMoisture) => {
+    if (soilMoisture == null) return { label: 'Nema podataka', mood: 'happy', color: 'var(--clay)' }
+    if (soilMoisture < 25) return { label: 'Suha', mood: 'thirsty', color: 'var(--ember)' }
+    if (soilMoisture < 40) return { label: 'Umjereno', mood: 'could-use', color: 'var(--sun)' }
+    if (soilMoisture < 70) return { label: 'Zdrava', mood: 'happy', color: 'var(--leaf)' }
+    return { label: 'Prezasićena', mood: 'wet', color: 'var(--water)' }
   }
 
-  const nextMsg = () => setMsgIdx(i => i + 1)
-  const saveName = () => {
-    const name = nameInput.trim() || plantName
-    setPlantName(name)
-    setEditing(false)
+  const plantMessage = (soilMoisture) => {
+    const msgs = getMessages(soilMoisture).msgs
+    return msgs[0] || ''
   }
-
-  const moodColors = {
-    thirsty: 'var(--ember)',
-    'could-use': 'var(--sun)',
-    happy: 'var(--leaf)',
-    wet: 'var(--water)',
-  }
-
-  useEffect(() => {
-    const refreshId = setInterval(() => window.location.reload(), 10000)
-    return () => clearInterval(refreshId)
-  }, [])
 
   return (
     <div className={styles.page}>
       <div className={styles.header}>
-        <h1 className={styles.title}>Moja biljka</h1>
-        <p className={styles.sub}>Personaliziraj svoju biljku i slušaj što ti govori</p>
+        <h1 className={styles.title}>Moje biljke</h1>
+        <p className={styles.sub}>Pogledaj sve svoje biljke i vidi što svaka od njih govori</p>
       </div>
 
-      <div className={styles.sectionTitle}>Sve moje biljke</div>
-      <div className={styles.plantList}>
+      <div className={styles.plantsGrid}>
         {plants.length ? plants.map((plant) => {
-          const soil = plant.telemetry?.groundHumidity
-          const temp = plant.telemetry?.temperature
-          const humidity = plant.telemetry?.humidity
-          const active = selectedDevice?.id === plant.id
+          const telemetry = plant.telemetry || {}
+          const soil = telemetry.groundHumidity
+          const temp = telemetry.temperature
+          const humidity = telemetry.humidity
+          const status = getPlantStatus(soil)
+
           return (
-            <button
-              type="button"
-              key={plant.id}
-              className={`${styles.plantCardSmall} ${active ? styles.plantCardSmallActive : ''}`}
-              onClick={() => selectPlant(plant)}
-            >
-              <div className={styles.plantCardName}>{plant.name}</div>
-              <div className={styles.plantCardStatus}>{soil != null ? `${Math.round(soil)}% vlage tla` : 'Nema live podataka'}</div>
-              <div className={styles.plantStatRow}>
-                <span className={styles.plantStatLabel}>Temperatura</span>
-                <span className={styles.plantStatVal}>{temp != null ? `${temp.toFixed(1)}°C` : '--'}</span>
+            <article key={plant.id} className={styles.plantCard}>
+              <div className={styles.plantCardLeft}>
+                <div className={styles.plantHeader}>
+                  <div className={styles.plantFig}>
+                    <BigPlant mood={status.mood} />
+                  </div>
+                  <div>
+                    <h2 className={styles.plantName}>{plant.name}</h2>
+                    <div className={styles.plantHealthBadge} style={{ background: `${status.color}22`, color: status.color }}>
+                      {status.label}
+                    </div>
+                    <div className={styles.sensorInfo}>Senzor: {plant.name}</div>
+                  </div>
+                </div>
+
+                <div className={styles.plantMetrics}>
+                  <div className={styles.metricRow}>
+                    <span>Vlažnost tla</span>
+                    <strong>{soil != null ? `${Math.round(soil)}%` : '--'}</strong>
+                  </div>
+                  <div className={styles.metricRow}>
+                    <span>Temperatura</span>
+                    <strong>{temp != null ? `${temp.toFixed(1)}°C` : '--'}</strong>
+                  </div>
+                  <div className={styles.metricRow}>
+                    <span>Vlaga zraka</span>
+                    <strong>{humidity != null ? `${Math.round(humidity)}%` : '--'}</strong>
+                  </div>
+                </div>
               </div>
-              <div className={styles.plantStatRow}>
-                <span className={styles.plantStatLabel}>Vlaga zraka</span>
-                <span className={styles.plantStatVal}>{humidity != null ? `${Math.round(humidity)}%` : '--'}</span>
+
+              <div className={styles.plantCardRight}>
+                <div className={styles.bubbleLabel}>Što biljka govori</div>
+                <div className={styles.bubbleSmall}>
+                  <p className={styles.bubbleText}>{plantMessage(soil)}</p>
+                </div>
               </div>
-              <div className={styles.plantMeter}>
-                <div className={styles.plantMeterFill} style={{ width: `${soil != null ? Math.max(0, Math.min(soil, 100)) : 0}%` }} />
-              </div>
-            </button>
+            </article>
           )
         }) : (
           <div className={styles.emptyState}>Učitavam biljke...</div>
         )}
-      </div>
-
-      <div className={styles.grid}>
-        {/* ID biljke */}
-        <div className={styles.identCard}>
-          <div className={styles.plantFig}>
-            <BigPlant mood={group.mood} />
-          </div>
-          <div className={styles.identity}>
-            {editing ? (
-              <div className={styles.editRow}>
-                <input
-                  className={styles.nameInput}
-                  value={nameInput}
-                  onChange={e => setNameInput(e.target.value)}
-                  autoFocus
-                  onKeyDown={e => e.key === 'Enter' && saveName()}
-                />
-                <button className={styles.saveBtn} onClick={saveName}>Spremi</button>
-              </div>
-            ) : (
-              <div className={styles.nameRow}>
-                <h2 className={styles.plantName}>{plantName}</h2>
-                <button className={styles.editBtn} onClick={() => setEditing(true)}>✏️</button>
-              </div>
-            )}
-            <p className={styles.plantSpecies}>{selectedDevice?.name ? `${selectedDevice.name} · ESP32 Sensor` : 'Sobna biljka · ESP32 Sensor'}</p>
-            <div className={styles.moodBadge} style={{ background: `${moodColors[group.mood]}22`, color: moodColors[group.mood] }}>
-              <span className={styles.moodDot} style={{ background: moodColors[group.mood] }} />
-              {group.mood === 'happy' ? 'Sretna' : group.mood === 'thirsty' ? 'Žedna' : group.mood === 'could-use' ? 'Umjereno' : 'Prezasićena'}
-            </div>
-          </div>
-        </div>
-
-        {/* baloncic govora */}
-        <div className={styles.speechCard}>
-          <div className={styles.bubbleLabel}>ŠTO TI BILJKA GOVORI</div>
-          <div className={styles.bubble}>
-            <p className={styles.bubbleText}>„{currentMsg}"</p>
-          </div>
-          <button className={styles.nextBtn} onClick={nextMsg}>
-            Sljedeća poruka →
-          </button>
-        </div>
-
-        {/* status */}
-        <div className={styles.statsCard}>
-          <div className={styles.statRow}>
-            <span className={styles.statLabel}>Vlažnost tla</span>
-            <span className={styles.statVal}>{sensors.soilMoisture != null ? `${Math.round(sensors.soilMoisture)}%` : '--'}</span>
-          </div>
-          <div className={styles.statRow}>
-            <span className={styles.statLabel}>Temperatura</span>
-            <span className={styles.statVal}>{sensors.airTemp != null ? `${sensors.airTemp.toFixed(1)}°C` : '--'}</span>
-          </div>
-          <div className={styles.statRow}>
-            <span className={styles.statLabel}>Vlaga zraka</span>
-            <span className={styles.statVal}>{sensors.airHumidity != null ? `${sensors.airHumidity}%` : '--'}</span>
-          </div>
-          <div className={styles.statRow}>
-            <span className={styles.statLabel}>Live veza</span>
-            <span className={styles.statVal}>{connected ? 'Uživo' : 'Nije spojen'}</span>
-          </div>
-          <div className={styles.statRow}>
-            <span className={styles.statLabel}>Backend</span>
-            <span className={styles.statVal}>{connectionOk === true ? 'Aktivan' : connectionOk === false ? 'Nedostupan' : '...'}</span>
-          </div>
-        </div>
-
-        {/* biljeske */}
-        <div className={styles.notesCard}>
-          <label className={styles.notesLabel}>Bilješke o biljci</label>
-          <textarea
-            className={styles.notesArea}
-            placeholder="Npr: Presaditi u travnju, voli direktno sunce..."
-            value={notes}
-            onChange={e => setNotes(e.target.value)}
-            rows={4}
-          />
-        </div>
       </div>
     </div>
   )

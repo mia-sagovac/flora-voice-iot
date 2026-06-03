@@ -4,9 +4,9 @@ import styles from './AppShell.module.css'
 
 const NAV = [
   { to: '/dashboard', icon: <DashIcon />, label: 'Pregled' },
-  { to: '/plant',     icon: <PlantIcon />, label: 'Moja biljka' },
+  { to: '/plant',     icon: <PlantIcon />, label: 'Moje biljke' },
   { to: '/sensors',   icon: <SensorIcon />, label: 'Senzori' },
-  { to: '/weather',   icon: <WeatherIcon />, label: 'Vremenska' },
+  { to: '/weather',   icon: <WeatherIcon />, label: 'Vrijeme' },
   { to: '/watering',  icon: <WaterIcon />, label: 'Zalijevanje' },
 ]
 
