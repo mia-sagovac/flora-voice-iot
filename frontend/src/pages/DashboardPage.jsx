@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { fetchMyDevices, fetchSensorTelemetry, triggerPump } from '../api/client'
+import { fetchOverview, fetchSensorTelemetry, triggerPump } from '../api/client'
 import { useLiveTelemetry } from '../api/useLiveTelemetry'
 import { useAuth } from '../context/AuthContext'
 import styles from '../styles/DashboardPage.module.css'
@@ -22,12 +22,27 @@ export default function DashboardPage() {
   const [wateringNow, setWateringNow] = useState(false)
   const [pumpError, setPumpError] = useState(null)
 
-  // 1. dohvati MOJE uredjaje (backend customer_id izvodi iz tokena), uzmi prvi
+  // 1. dohvati MOJE pregled uređaja i odaberi onu s najmanjom vlagom tla
   useEffect(() => {
-    fetchMyDevices()
+    fetchOverview()
       .then(res => {
         const list = res.data.devices || []
-        if (list.length) setDevice(list[0])
+        const best = list.reduce((chosen, device) => {
+          const soil = device.telemetry?.groundHumidity
+          const chosenSoil = chosen?.telemetry?.groundHumidity
+          if (soil == null) return chosen
+          if (chosen == null || chosenSoil == null || soil < chosenSoil) return device
+          return chosen
+        }, list[0])
+
+        if (best) {
+          setDevice({ id: best.id, name: best.name })
+          setSensors({
+            soilMoisture: best.telemetry?.groundHumidity ?? null,
+            airTemp: best.telemetry?.temperature ?? null,
+            airHumidity: best.telemetry?.humidity ?? null,
+          })
+        }
         setConnectionOk(true)
       })
       .catch(() => setConnectionOk(false))

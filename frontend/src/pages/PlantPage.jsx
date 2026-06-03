@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { fetchMyDevices, fetchSensorTelemetry } from '../api/client'
+import { fetchOverview, fetchSensorTelemetry } from '../api/client'
 import { useLiveTelemetry } from '../api/useLiveTelemetry'
 import styles from '../styles/PlantPage.module.css'
 
@@ -34,7 +34,8 @@ function getMessages(moisture) {
 
 export default function PlantPage() {
   const { latest, connected } = useLiveTelemetry()
-  const [device, setDevice] = useState(null)
+  const [plants, setPlants] = useState([])
+  const [selectedDevice, setSelectedDevice] = useState(null)
   const [sensors, setSensors] = useState({ soilMoisture: null, airTemp: null, airHumidity: null, lightLevel: null, lastWatered: '--' })
   const [plantName, setPlantName] = useState(() => localStorage.getItem('plantName') || 'Zelen')
   const [editing, setEditing] = useState(false)
@@ -47,6 +48,12 @@ export default function PlantPage() {
   const group = getMessages(sensors.soilMoisture ?? 0)
   const currentMsg = group.msgs[msgIdx % group.msgs.length]
 
+  const normalizeTelemetry = (telemetry = {}) => ({
+    soilMoisture: telemetry.groundHumidity ?? null,
+    airTemp: telemetry.temperature ?? null,
+    airHumidity: telemetry.humidity ?? null,
+  })
+
   useEffect(() => {
     localStorage.setItem('plantName', plantName)
     setNameInput(plantName)
@@ -57,41 +64,57 @@ export default function PlantPage() {
   }, [notes])
 
   useEffect(() => {
-    fetchMyDevices()
+    fetchOverview()
       .then(res => {
-        const list = res.data.devices || []
-        if (list.length) setDevice(list[0])
+        const list = (res.data.devices || []).map(device => ({
+          ...device,
+          telemetry: device.telemetry || {},
+        }))
+        setPlants(list)
+        if (list.length) {
+          setSelectedDevice(list[0])
+          setSensors(prev => ({
+            ...prev,
+            ...normalizeTelemetry(list[0].telemetry),
+          }))
+        }
         setConnectionOk(true)
       })
       .catch(() => setConnectionOk(false))
   }, [])
 
   useEffect(() => {
-    if (!device) return
-    fetchSensorTelemetry(device.id)
-      .then(res => {
-        const d = res.data?.data || {}
-        setSensors(s => ({
-          ...s,
-          soilMoisture: d.groundHumidity ?? s.soilMoisture,
-          airTemp: d.temperature ?? s.airTemp,
-          airHumidity: d.humidity ?? s.airHumidity,
-        }))
-      })
-      .catch(() => {})
-  }, [device])
+    if (!selectedDevice) return
+    setSensors(prev => ({
+      ...prev,
+      ...normalizeTelemetry(selectedDevice.telemetry),
+    }))
+  }, [selectedDevice])
 
   useEffect(() => {
     if (!latest?.data) return
-    if (device && latest.device_id && latest.device_id !== device.id) return
-    const d = latest.data
-    setSensors(s => ({
-      ...s,
-      soilMoisture: d.groundHumidity ?? s.soilMoisture,
-      airTemp: d.temperature ?? s.airTemp,
-      airHumidity: d.humidity ?? s.airHumidity,
-    }))
-  }, [latest, device])
+    const deviceId = latest.device_id
+    const telemetry = latest.data
+    setPlants(prev =>
+      prev.map((plant) =>
+        plant.id === deviceId
+          ? { ...plant, telemetry: { ...plant.telemetry, ...telemetry } }
+          : plant
+      )
+    )
+    if (selectedDevice?.id === deviceId) {
+      setSensors(prev => ({
+        ...prev,
+        soilMoisture: telemetry.groundHumidity ?? prev.soilMoisture,
+        airTemp: telemetry.temperature ?? prev.airTemp,
+        airHumidity: telemetry.humidity ?? prev.airHumidity,
+      }))
+    }
+  }, [latest, selectedDevice])
+
+  const selectPlant = (plant) => {
+    setSelectedDevice(plant)
+  }
 
   const nextMsg = () => setMsgIdx(i => i + 1)
   const saveName = () => {
@@ -119,6 +142,40 @@ export default function PlantPage() {
         <p className={styles.sub}>Personaliziraj svoju biljku i slušaj što ti govori</p>
       </div>
 
+      <div className={styles.sectionTitle}>Sve moje biljke</div>
+      <div className={styles.plantList}>
+        {plants.length ? plants.map((plant) => {
+          const soil = plant.telemetry?.groundHumidity
+          const temp = plant.telemetry?.temperature
+          const humidity = plant.telemetry?.humidity
+          const active = selectedDevice?.id === plant.id
+          return (
+            <button
+              type="button"
+              key={plant.id}
+              className={`${styles.plantCardSmall} ${active ? styles.plantCardSmallActive : ''}`}
+              onClick={() => selectPlant(plant)}
+            >
+              <div className={styles.plantCardName}>{plant.name}</div>
+              <div className={styles.plantCardStatus}>{soil != null ? `${Math.round(soil)}% vlage tla` : 'Nema live podataka'}</div>
+              <div className={styles.plantStatRow}>
+                <span className={styles.plantStatLabel}>Temperatura</span>
+                <span className={styles.plantStatVal}>{temp != null ? `${temp.toFixed(1)}°C` : '--'}</span>
+              </div>
+              <div className={styles.plantStatRow}>
+                <span className={styles.plantStatLabel}>Vlaga zraka</span>
+                <span className={styles.plantStatVal}>{humidity != null ? `${Math.round(humidity)}%` : '--'}</span>
+              </div>
+              <div className={styles.plantMeter}>
+                <div className={styles.plantMeterFill} style={{ width: `${soil != null ? Math.max(0, Math.min(soil, 100)) : 0}%` }} />
+              </div>
+            </button>
+          )
+        }) : (
+          <div className={styles.emptyState}>Učitavam biljke...</div>
+        )}
+      </div>
+
       <div className={styles.grid}>
         {/* ID biljke */}
         <div className={styles.identCard}>
@@ -143,7 +200,7 @@ export default function PlantPage() {
                 <button className={styles.editBtn} onClick={() => setEditing(true)}>✏️</button>
               </div>
             )}
-            <p className={styles.plantSpecies}>Sobna biljka · ESP32 Sensor</p>
+            <p className={styles.plantSpecies}>{selectedDevice?.name ? `${selectedDevice.name} · ESP32 Sensor` : 'Sobna biljka · ESP32 Sensor'}</p>
             <div className={styles.moodBadge} style={{ background: `${moodColors[group.mood]}22`, color: moodColors[group.mood] }}>
               <span className={styles.moodDot} style={{ background: moodColors[group.mood] }} />
               {group.mood === 'happy' ? 'Sretna' : group.mood === 'thirsty' ? 'Žedna' : group.mood === 'could-use' ? 'Umjereno' : 'Prezasićena'}

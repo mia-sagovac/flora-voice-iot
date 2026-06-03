@@ -9,7 +9,82 @@
   grid-template-rows: auto auto;
   gap: 16px;
 }
-@media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }
+.sectionTitle {
+  margin: 24px 0 12px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--soil);
+}
+.plantList {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.plantCardSmall {
+  text-align: left;
+  background: white;
+  border-radius: var(--radius-lg);
+  border: 1.5px solid var(--mist);
+  padding: 18px 20px;
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.plantCardSmall:hover {
+  transform: translateY(-1px);
+  border-color: var(--leaf);
+  box-shadow: var(--shadow-sm);
+}
+.plantCardSmallActive {
+  border-color: var(--leaf);
+  box-shadow: 0 0 0 3px rgba(131, 183, 96, 0.12);
+}
+.plantCardName {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--soil);
+  margin-bottom: 6px;
+}
+.plantCardStatus {
+  color: var(--clay);
+  font-size: 0.85rem;
+  margin-bottom: 12px;
+}
+.plantStatRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.plantStatLabel {
+  color: var(--clay);
+  font-size: 0.78rem;
+}
+.plantStatVal {
+  color: var(--bark);
+  font-family: var(--font-mono);
+  font-size: 0.96rem;
+}
+.plantMeter {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--dew);
+  overflow: hidden;
+  margin-top: 6px;
+}
+.plantMeterFill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--leaf);
+}
+.emptyState {
+  color: var(--clay);
+  font-size: 0.92rem;
+  grid-column: 1 / -1;
+  padding: 16px;
+  background: var(--dew);
+  border-radius: var(--radius-lg);
+}
+@media (max-width: 720px) { .grid { grid-template-columns: 1fr; } .plantList { grid-template-columns: 1fr; } }
 
 
 .identCard {
