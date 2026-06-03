@@ -100,6 +100,20 @@ class ThingsBoardClient:
         if response.status_code != 200:
             raise HTTPException(status_code=400, detail="ne mogu dohvatiti uređaje")
         return response.json()["data"]
+    
+    async def set_device_attributes(self, token: str, device_id: str, attributes: dict) -> None:
+        async with httpx.AsyncClient(timeout=self.timeout) as client:
+            try:
+                response = await client.post(
+                    f"{self.base_url}/api/plugins/telemetry/DEVICE/{device_id}/attributes/SERVER_SCOPE",
+                    json=attributes,
+                    headers={"X-Authorization": f"Bearer {token}"},
+                )
+            except httpx.RequestError as e:
+                raise HTTPException(status_code=503, detail=f"greska prema thingsboardu: {e}")
+        if response.status_code != 200:
+            # 403 = korisnik nema pravo na taj uredjaj
+            raise HTTPException(status_code=response.status_code, detail="ne mogu poslati naredbu pumpi")
 
 tb_client = ThingsBoardClient(
     base_url=settings.thingsboard_url,

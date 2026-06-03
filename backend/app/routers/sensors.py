@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Request, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Depends, Request, WebSocket, WebSocketDisconnect, HTTPException
 from app.dependencies import oauth2_scheme
 from app.schemas import SensorResponse, SensorData
 from app.thingsboard import tb_client
@@ -6,52 +6,72 @@ from app.connectionmanager import manager
 
 router = APIRouter(prefix="/sensors", tags=["sensors"])
 
-"""
 @router.get("/{device_id}/telemetry", response_model=SensorResponse)
 async def get_sensor_data(device_id: str, token: str = Depends(oauth2_scheme)):
-    print("kj<ydglvkydxfugilhlkjdfghkjldsgfčhuogsr")
     keys = "temperature,humidity,groundHumidity"
-
-    raw_data = await tb_client.get_sensor_data(token, device_id, keys)
-    # {"temperature": [{"value": "24.5", "ts": 1600000}], "humidity": [{"value": "45", "ts": 1600000}]}
-
-    temp = None
-    hum = None
-    grHum = None
-
-    if "temperature" in raw_data and len(raw_data["temperature"]) > 0:
-        temp = float(raw_data["temperature"][0]["value"])
-
-    if "humidity" in raw_data and len(raw_data["humidity"]) > 0:
-        hum = float(raw_data["humidity"][0]["value"])
-
-    if "groundHumidity" in raw_data and len(raw_data["groundHumidity"]) > 0:
-        grHum = float(raw_data["groundHumidity"][0]["value"])
-
+    raw = await tb_client.get_sensor_data(token, device_id, keys)  # TB enforca pristup
+ 
+    def first(key):
+        vals = raw.get(key)
+        return float(vals[0]["value"]) if vals else None
+ 
     return SensorResponse(
         device_id=device_id,
-        data=SensorData(temperature=temp, humidity=hum, groundHumidity=grHum)
+        data=SensorData(
+            temperature=first("temperature"),
+            humidity=first("humidity"),
+            groundHumidity=first("groundHumidity"),
+        ),
     )
-"""
 
 @router.post("/webhook/telemetry")
-async def receive_telemetry_webhook(request: Request):
-    # Pročitaj što je ThingsBoard poslao
+async def receive_telemetry_webhook(request: Request, device: str = "unknown"):
     payload = await request.json()
-    print("STIGLI PODACI S THINGSBOARDA:", payload)
-
-    # PROSLIJEDI ODMAH NA FRONTEND PREKO WEBSOCKETA
-    await manager.broadcast(payload)
-
+    device_id = manager.resolve(device)  # ime -> id
+    print(f"STIGLO za '{device}' (id={device_id}): {payload}")
+    if device_id:  # rutiraj po id-u samo onima koji taj uredjaj smiju vidjeti
+        await manager.send_to_device_id(
+            device_id, {"device_id": device_id, "device": device, "data": payload}
+        )
     return {"status": "success"}
 
 @router.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
-    await manager.connect(websocket)
+    await websocket.accept()
+    token = await websocket.receive_text() # prva poruka je token
+ 
+    try:
+        user = await tb_client.get_user(token) # validira token
+        customer_id = user["customerId"]["id"] # iz tokena, ne od klijenta
+        devices = await tb_client.get_customer_devices(token, customer_id)
+    except (HTTPException, KeyError, TypeError):
+        await websocket.close(code=1008) # nevazeci token / nije customer
+        return
+ 
+    manager.connect(websocket, devices)
+    print(f"Frontend spojen, gleda uredjaje: {[d['name'] for d in devices]}")
     try:
         while True:
-            # Petlja koja drži vezu otvorenom
-            data = await websocket.receive_text()
+            await websocket.receive_text() # drzi vezu otvorenom
     except WebSocketDisconnect:
         manager.disconnect(websocket)
         print("Frontend se odspojio.")
+
+
+@router.get("/devices")
+async def list_my_devices(token: str = Depends(oauth2_scheme)):
+    user = await tb_client.get_user(token)
+    customer_id = user.get("customerId", {}).get("id")
+    if not customer_id:
+        raise HTTPException(status_code=400, detail="korisnik nije customer user")
+    devices = await tb_client.get_customer_devices(token, customer_id)
+    return {
+        "customer_id": customer_id,
+        "devices": [{"id": d["id"]["id"], "name": d["name"]} for d in devices],
+    }
+
+@router.post("/{device_id}/pump")
+async def trigger_pump(device_id: str, token: str = Depends(oauth2_scheme)):
+    # isto kao tvoj curl: POST atributa u SERVER_SCOPE
+    await tb_client.set_device_attributes(token, device_id, {"triggerWatering": True})
+    return {"status": "ok", "device_id": device_id}
