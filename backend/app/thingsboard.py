@@ -89,7 +89,7 @@ class ThingsBoardClient:
             )
 
         return response.json()
-    
+
     async def get_customer_devices(self, token: str, customer_id: str) -> list[dict]:
         async with httpx.AsyncClient(timeout=self.timeout) as client:
             response = await client.get(
@@ -100,7 +100,7 @@ class ThingsBoardClient:
         if response.status_code != 200:
             raise HTTPException(status_code=400, detail="ne mogu dohvatiti uređaje")
         return response.json()["data"]
-    
+
     async def set_device_attributes(self, token: str, device_id: str, attributes: dict) -> None:
         async with httpx.AsyncClient(timeout=self.timeout) as client:
             try:
@@ -114,7 +114,28 @@ class ThingsBoardClient:
         if response.status_code != 200:
             # 403 = korisnik nema pravo na taj uredjaj
             raise HTTPException(status_code=response.status_code, detail="ne mogu poslati naredbu pumpi")
-        
+
+    async def get_server_attributes(self, token: str, device_id: str, keys: str | None = None) -> dict:
+        """Citam SERVER_SCOPE atribute uredjaja (npr. latitude, longitude, city), splosteno u {kljuc: vrijednost}."""
+        params = {}
+        if keys:
+            params["keys"] = keys
+        async with httpx.AsyncClient(timeout=self.timeout) as client:
+            try:
+                response = await client.get(
+                    f"{self.base_url}/api/plugins/telemetry/DEVICE/{device_id}/values/attributes/SERVER_SCOPE",
+                    params=params,
+                    headers={"X-Authorization": f"Bearer {token}"},
+                )
+            except httpx.RequestError as e:
+                raise HTTPException(status_code=503, detail=f"greska: {e}")
+        if response.status_code != 200:
+            return {}
+        out = {}
+        for item in response.json():  # oblik [{"key": "latitude", "value": "45.80", "lastUpdateTs": ...}]
+            out[item["key"]] = item.get("value")
+        return out
+
     async def get_timeseries_keys(self, token: str, device_id: str) -> list[str]:
         """Dobivam koje telemetrijske kljuceve uredjaj uopce ima."""
         async with httpx.AsyncClient(timeout=self.timeout) as client:
@@ -126,7 +147,7 @@ class ThingsBoardClient:
             except httpx.RequestError as e:
                 raise HTTPException(status_code=503, detail=f"greska: {e}")
         return response.json() if response.status_code == 200 else []
-    
+
     async def get_latest_telemetry(self, token: str, device_id: str, keys: str) -> dict:
         """Dobivam zadnje vrijednost po kljucu, splosteno u {kljuc: vrijednost}."""
         async with httpx.AsyncClient(timeout=self.timeout) as client:
@@ -152,6 +173,37 @@ class ThingsBoardClient:
                     pass
                 out[key] = v
         return out
+
+    async def get_timeseries_history(
+            self,
+            token: str,
+            device_id: str,
+            keys: str,
+            start_ts: int,
+            end_ts: int,
+            limit: int = 5000,
+            order_by: str = "ASC",
+    ) -> dict:
+        """Povijesna telemetrija u vremenskom prozoru. Vraca sirov TB oblik {kljuc: [{"ts": .., "value": ..}, ..]}."""
+        async with httpx.AsyncClient(timeout=self.timeout) as client:
+            try:
+                response = await client.get(
+                    f"{self.base_url}/api/plugins/telemetry/DEVICE/{device_id}/values/timeseries",
+                    params={
+                        "keys": keys,
+                        "startTs": start_ts,
+                        "endTs": end_ts,
+                        "limit": limit,
+                        "orderBy": order_by,
+                        "agg": "NONE",
+                    },
+                    headers={"X-Authorization": f"Bearer {token}"},
+                )
+            except httpx.RequestError as e:
+                raise HTTPException(status_code=503, detail=f"greska: {e}")
+        if response.status_code != 200:
+            raise HTTPException(status_code=response.status_code, detail="ne mogu dohvatiti povijest telemetrije")
+        return response.json()
 
 tb_client = ThingsBoardClient(
     base_url=settings.thingsboard_url,

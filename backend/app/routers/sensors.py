@@ -4,6 +4,7 @@ from app.schemas import SensorResponse, SensorData
 from app.thingsboard import tb_client
 from app.connectionmanager import manager
 import asyncio
+import time
 
 router = APIRouter(prefix="/sensors", tags=["sensors"])
 
@@ -11,11 +12,11 @@ router = APIRouter(prefix="/sensors", tags=["sensors"])
 async def get_sensor_data(device_id: str, token: str = Depends(oauth2_scheme)):
     keys = "temperature,humidity,groundHumidity"
     raw = await tb_client.get_sensor_data(token, device_id, keys) # TB enforca pristup
- 
+
     def first(key):
         vals = raw.get(key)
         return float(vals[0]["value"]) if vals else None
- 
+
     return SensorResponse(
         device_id=device_id,
         data=SensorData(
@@ -24,6 +25,32 @@ async def get_sensor_data(device_id: str, token: str = Depends(oauth2_scheme)):
             groundHumidity=first("groundHumidity"),
         ),
     )
+
+@router.get("/{device_id}/timeseries")
+async def get_sensor_timeseries(
+        device_id: str,
+        keys: str = "temperature,humidity,groundHumidity",
+        hours: int = 24,
+        token: str = Depends(oauth2_scheme),
+):
+    """Povijesna telemetrija za graf — zadnjih `hours` sati. TB enforca pristup po tokenu."""
+    end_ts = int(time.time() * 1000)
+    start_ts = end_ts - hours * 60 * 60 * 1000
+    raw = await tb_client.get_timeseries_history(token, device_id, keys, start_ts, end_ts)
+
+    series = {}
+    for key, parts in raw.items():
+        points = []
+        for p in parts:
+            v = p["value"]
+            try:
+                v = float(v)
+            except (TypeError, ValueError):
+                pass
+            points.append({"ts": p["ts"], "value": v})
+        series[key] = points
+
+    return {"device_id": device_id, "hours": hours, "series": series}
 
 @router.post("/webhook/telemetry")
 async def receive_telemetry_webhook(request: Request, device: str = "unknown"):
@@ -40,7 +67,7 @@ async def receive_telemetry_webhook(request: Request, device: str = "unknown"):
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     token = await websocket.receive_text() # prva poruka je token
- 
+
     try:
         user = await tb_client.get_user(token) # validira token
         customer_id = user["customerId"]["id"] # iz tokena dobim customer_id
@@ -48,7 +75,7 @@ async def websocket_endpoint(websocket: WebSocket):
     except (HTTPException, KeyError, TypeError):
         await websocket.close(code=1008) # nevazeci token
         return
- 
+
     manager.connect(websocket, devices)
     print(f"Frontend spojen, gleda uredjaje: {[d['name'] for d in devices]}")
     try:
@@ -86,16 +113,32 @@ async def get_overview(token: str = Depends(oauth2_scheme)):
 
     devices = await tb_client.get_customer_devices(token, customer_id)
 
+    def to_float(v):
+        try:
+            return float(v)
+        except (TypeError, ValueError):
+            return None
+
     async def one(d):
         dev_id = d["id"]["id"]
         telemetry = {}
+        location = {}
         try:
             keys = await tb_client.get_timeseries_keys(token, dev_id)
             if keys:
                 telemetry = await tb_client.get_latest_telemetry(token, dev_id, ",".join(keys))
         except HTTPException:
             pass  # jedan uredjaj padne -> ne rusi cijeli odgovor
-        return {"id": dev_id, "name": d["name"], "telemetry": telemetry}
+        try:
+            attrs = await tb_client.get_server_attributes(token, dev_id, "latitude,longitude,city")
+            location = {
+                "latitude": to_float(attrs.get("latitude")),
+                "longitude": to_float(attrs.get("longitude")),
+                "city": attrs.get("city"),
+            }
+        except HTTPException:
+            pass
+        return {"id": dev_id, "name": d["name"], "telemetry": telemetry, "location": location}
 
     results = await asyncio.gather(*[one(d) for d in devices])
     return {"customer_id": customer_id, "devices": results}

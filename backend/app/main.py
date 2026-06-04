@@ -12,6 +12,7 @@ from app.config import settings
 from app.routers import test
 from app.routers import auth
 from app.routers import sensors
+from app.routers import weather
 
 app = FastAPI(
     title="FastAPI + ThingsBoard",
@@ -31,6 +32,7 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(test.router)
 app.include_router(sensors.router)
+app.include_router(weather.router)
 
 @app.get("/", tags=["meta"])
 def root():
