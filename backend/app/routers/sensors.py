@@ -55,11 +55,14 @@ async def get_sensor_timeseries(
 @router.post("/webhook/telemetry")
 async def receive_telemetry_webhook(request: Request, device: str = "unknown"):
     payload = await request.json()
+
+    telemetry = payload.get("telemetry", {}) or {}
+
     device_id = manager.resolve(device) # ime -> id
     print(f"STIGLO za '{device}' (id={device_id}): {payload}")
     if device_id: # rutiraj po id-u samo onima koji taj uredjaj smiju vidjeti
         await manager.send_to_device_id(
-            device_id, {"device_id": device_id, "device": device, "data": payload}
+            device_id, {"device_id": device_id, "device": device, "data": telemetry}
         )
     return {"status": "success"}
 
