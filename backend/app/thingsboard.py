@@ -115,8 +115,8 @@ class ThingsBoardClient:
             # 403 = korisnik nema pravo na taj uredjaj
             raise HTTPException(status_code=response.status_code, detail="ne mogu poslati naredbu pumpi")
 
+    """
     async def get_server_attributes(self, token: str, device_id: str, keys: str | None = None) -> dict:
-        """Citam SERVER_SCOPE atribute uredjaja (npr. latitude, longitude, city), splosteno u {kljuc: vrijednost}."""
         params = {}
         if keys:
             params["keys"] = keys
@@ -135,6 +135,7 @@ class ThingsBoardClient:
         for item in response.json():  # oblik [{"key": "latitude", "value": "45.80", "lastUpdateTs": ...}]
             out[item["key"]] = item.get("value")
         return out
+    """
 
     async def get_timeseries_keys(self, token: str, device_id: str) -> list[str]:
         """Dobivam koje telemetrijske kljuceve uredjaj uopce ima."""

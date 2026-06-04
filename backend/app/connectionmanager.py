@@ -7,7 +7,8 @@ class ConnectionManager:
     def __init__(self):
         self.subscribers: dict[str, set[WebSocket]] = {} # deviceId -> socketi
         self.name_to_id: dict[str, str] = {} # deviceName -> deviceId
- 
+        self.locations: dict[str, dict] = {}
+
     def connect(self, websocket: WebSocket, devices: list[dict]):
         # devices je lista iz get_customer_devices oblika [{id: {id: <uuid>}, name: ...}]
         for d in devices:
@@ -32,5 +33,12 @@ class ConnectionManager:
                 dead.append(ws)
         for ws in dead:
             self.disconnect(ws)
+
+    def set_location(self, device_id: str, location: dict):
+        if device_id and location:
+            self.locations[device_id] = location
+
+    def get_location(self, device_id: str) -> dict:
+        return self.locations.get(device_id, {})
 
 manager = ConnectionManager()

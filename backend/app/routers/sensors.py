@@ -57,12 +57,29 @@ async def receive_telemetry_webhook(request: Request, device: str = "unknown"):
     payload = await request.json()
 
     telemetry = payload.get("telemetry", {}) or {}
+    garden = payload.get("garden", {}) or {}
 
     device_id = manager.resolve(device) # ime -> id
+
+    def to_float(v):
+        try: return float(v)
+        except (TypeError, ValueError): return None
+
+    location = {
+        "latitude": to_float(garden.get("latitude")),
+        "longitude": to_float(garden.get("longitude")),
+        "city": garden.get("city"),
+    }
+
+    print(f"DEVICEID: {device_id}")
+    if device_id:
+        print(f"LOKACIJA {location}")
+        manager.set_location(device_id, location)
+
     print(f"STIGLO za '{device}' (id={device_id}): {payload}")
     if device_id: # rutiraj po id-u samo onima koji taj uredjaj smiju vidjeti
         await manager.send_to_device_id(
-            device_id, {"device_id": device_id, "device": device, "data": telemetry}
+            device_id, {"device_id": device_id, "device": device, "data": telemetry, "location": location}
         )
     return {"status": "success"}
 
@@ -116,12 +133,6 @@ async def get_overview(token: str = Depends(oauth2_scheme)):
 
     devices = await tb_client.get_customer_devices(token, customer_id)
 
-    def to_float(v):
-        try:
-            return float(v)
-        except (TypeError, ValueError):
-            return None
-
     async def one(d):
         dev_id = d["id"]["id"]
         telemetry = {}
@@ -132,15 +143,10 @@ async def get_overview(token: str = Depends(oauth2_scheme)):
                 telemetry = await tb_client.get_latest_telemetry(token, dev_id, ",".join(keys))
         except HTTPException:
             pass  # jedan uredjaj padne -> ne rusi cijeli odgovor
-        try:
-            attrs = await tb_client.get_server_attributes(token, dev_id, "latitude,longitude,city")
-            location = {
-                "latitude": to_float(attrs.get("latitude")),
-                "longitude": to_float(attrs.get("longitude")),
-                "city": attrs.get("city"),
-            }
-        except HTTPException:
-            pass
+        
+        location = manager.get_location(dev_id)
+        print(f"DEVICEID: {dev_id}")
+        print(f"LOKACIJA: {location}")
         return {"id": dev_id, "name": d["name"], "telemetry": telemetry, "location": location}
 
     results = await asyncio.gather(*[one(d) for d in devices])
