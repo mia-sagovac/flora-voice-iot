@@ -8,23 +8,23 @@ const MESSAGES = [
   { mood: 'thirsty', soil: [0, 25], msgs: [
     'Hej! Mislim da sam malo žedan...',
     'Zamislite da ste vi zaboravili jesti cijeli dan. Tako se ja osjećam!',
-    'Moje korijenje traži vodu! Molim zalij me ubrzo.',
+    'Moje korijenje traži vodu! Molim, zalij me ubrzo.',
     'Znaš onaj osjećaj suhog grla? Upravo to imam.',
   ]},
   { mood: 'could-use', soil: [25, 40], msgs: [
     'Pomalo bih se osvježio, ali nije hitno.',
-    'Tlo je malo sušnije nego što volim, no još me neko vrijeme.',
-    'Ako si slobodan, zalijevanje bi dobrodošlo!',
+    'Tlo je malo sušnije nego što volim, no nekako ću se prilagoditi.',
+    'Ako si slobodan, zalijevanje bi dobro došlo!',
   ]},
   { mood: 'happy', soil: [40, 70], msgs: [
     'Savršeno se osjećam! Hvala što brineš za mene...',
     'Tlo je idealne vlažnosti. Danas ću rasti!',
-    'Sunce, prava temperatura, dobra vlaga — što više trebam?',
+    'Sunce, prava temperatura, dobra vlaga, što više trebam?',
     'Osjećam se kao šumska vila. Odlično mi je!',
   ]},
   { mood: 'wet', soil: [70, 100], msgs: [
-    'Malo previše vode... Ne moram sada biti zalijevano.',
-    'Čuvaj se prekomjernog zalijevanja — i meni nije zdravo!',
+    'Malo previše vode... Ne trebam sada piće.',
+    'Čuvaj se prekomjernog zalijevanja!',
     'Hvala, ali osjećam se kao da stojim u lokvi...',
   ]},
 ]
@@ -159,7 +159,9 @@ export default function PlantPage() {
                   >
                     Sljedeća poruka
                   </button>
-                    <div>
+                    
+                </div>
+                <div>
                       <button
                         type="button"
                         className={`${dashStyles.pumpBtn} ${wateringNowByPlant[plant.id] ? dashStyles.pumpActive : ''}`}
@@ -171,7 +173,6 @@ export default function PlantPage() {
                       </button>
                       {pumpErrorByPlant[plant.id] && <p style={{ color: 'var(--ember)', fontSize: '0.82rem', marginTop: 8 }}>{pumpErrorByPlant[plant.id]}</p>}
                     </div>
-                </div>
               </div>
             </article>
           )

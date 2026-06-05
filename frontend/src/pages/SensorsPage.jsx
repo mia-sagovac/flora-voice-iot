@@ -25,10 +25,7 @@ export default function SensorsPage() {
 
     useEffect(() => {
         fetchOverview()
-            .then(res => {
-                const list = (res.data.devices || []).map(p => ({ ...p, displayName: (p.name || '').split('_')[0] || p.name }))
-                setPlants(list)
-            })
+            .then(res => setPlants(res.data.devices || []))
             .catch(() => setPlants([]))
     }, [])
 
@@ -87,7 +84,7 @@ export default function SensorsPage() {
         const rows = []
         visiblePlants.forEach(p => {
             (seriesByPlant[p.id] || []).forEach(({ ts, value }) => {
-                rows.push({ ts, plant: p.displayName || p.name, value })
+               rows.push({ ts, plant: p.name, value })
             })
         })
         return rows.sort((a, b) => b.ts - a.ts).slice(0, 12)
@@ -126,7 +123,7 @@ export default function SensorsPage() {
                             className={`${styles.tab} ${isolated === p.id ? styles.tabActive : ''}`}
                             onClick={() => setIsolated(p.id)}
                         >
-                            {p.displayName || p.name}
+                            {p.name}
                         </button>
                     ))}
                 </div>
@@ -160,7 +157,7 @@ export default function SensorsPage() {
                                     key={p.id}
                                     type="monotone"
                                     dataKey={p.id}
-                                        name={p.displayName || p.name}
+                                        name={p.name}
                                     stroke={colorOf(p.id)}
                                     strokeWidth={2.5}
                                     dot={false}

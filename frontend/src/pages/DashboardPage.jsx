@@ -145,7 +145,7 @@ export default function DashboardPage() {
       </div>
 
       {/* grid senzora */}
-      <div className={styles.sectionTitle}>Senzori — uživo</div>
+      <div className={styles.sectionTitle}>Live senzori</div>
       <div className={styles.sensorGrid}>
         <SensorCard icon={<i className="fa-solid fa-thermometer-half" aria-hidden="true" />} label="Temperatura" value={`${sensors.airTemp ?? '--'}°C`} sub="Zrak" color="var(--ember)" />
         <SensorCard icon={<i className="fa-solid fa-droplet" aria-hidden="true" />} label="Vlaga zraka" value={`${sensors.airHumidity ?? '--'}%`} sub="Rel. vlažnost" color="var(--water)" />
