@@ -147,7 +147,7 @@ export default function DashboardPage() {
       {/* grid senzora */}
       <div className={styles.sectionTitle}>Live senzori</div>
       <div className={styles.sensorGrid}>
-        <SensorCard icon={<i className="fa-solid fa-thermometer-half" aria-hidden="true" />} label="Temperatura" value={`${sensors.airTemp ?? '--'}°C`} sub="Zrak" color="var(--ember)" />
+        <SensorCard icon={<i className="fa-solid fa-thermometer-half" aria-hidden="true" />} label="Temperatura" value={`${sensors.airTemp != null ? Number(sensors.airTemp).toFixed(2) : '--'}°C`} sub="Zrak" color="var(--ember)" />
         <SensorCard icon={<i className="fa-solid fa-droplet" aria-hidden="true" />} label="Vlaga zraka" value={`${sensors.airHumidity ?? '--'}%`} sub="Rel. vlažnost" color="var(--water)" />
         <SensorCard icon={<i className="fa-solid fa-seedling" aria-hidden="true" />} label="Vlažnost tla" value={`${sensors.soilMoisture != null ? Math.round(sensors.soilMoisture) : '--'}%`} sub="ESP32 sensor" color="var(--leaf)" />
       </div>
