@@ -26,12 +26,12 @@ function dayLabel(dateStr, index) {
 
 function plantWeatherMessage(soil, isRaining, rainSoon) {
     const dry = soil != null && soil < DRY_THRESHOLD
-    if (dry && isRaining) return { emoji: '🌧️', text: 'Žedna sam ali ne moraš me zaljevati jer kiši.' }
-    if (dry && rainSoon) return { emoji: '⏳', text: 'Žedna sam, ali uskoro stiže kiša — pričekaj malo prije zalijevanja.' }
-    if (dry) return { emoji: '😰', text: 'Žedna sam, a kiše nema na vidiku — zalij me!' }
-    if (soil != null && soil >= 70 && isRaining) return { emoji: '💧', text: 'Već sam dovoljno mokra, a još i kiši — nikako me ne zalijevaj.' }
-    if (isRaining) return { emoji: '😊', text: 'Kiši i osjećam se odlično, nije mi potrebno zalijevanje.' }
-    return { emoji: '🌿', text: 'Vlažnost mi je u redu, sve je super.' }
+    if (dry && isRaining) return { icon: 'fa-cloud-showers-heavy', text: 'Žedna sam ali ne moraš me zaljevati jer kiši.' }
+    if (dry && rainSoon) return { icon: 'fa-hourglass-half', text: 'Žedna sam, ali uskoro stiže kiša — pričekaj malo prije zalijevanja.' }
+    if (dry) return { icon: 'fa-exclamation-triangle', text: 'Žedna sam, a kiše nema na vidiku — zalij me!' }
+    if (soil != null && soil >= 70 && isRaining) return { icon: 'fa-droplet', text: 'Već sam dovoljno mokra, a još i kiši — nikako me ne zalijevaj.' }
+    if (isRaining) return { icon: 'fa-smile', text: 'Kiši i osjećam se odlično, nije mi potrebno zalijevanje.' }
+    return { icon: 'fa-seedling', text: 'Vlažnost mi je u redu, sve je super.' }
 }
 
 export default function WeatherPage() {
@@ -169,7 +169,7 @@ export default function WeatherPage() {
                     <div className={styles.plantMsgList}>
                         {plantMessages.length ? plantMessages.map(m => (
                             <div key={m.id} className={styles.plantMsgRow}>
-                                <span className={styles.plantMsgEmoji}>{m.emoji}</span>
+                                    <span className={styles.plantMsgEmoji}>{m.icon ? <i className={`fa-solid ${m.icon}`} aria-hidden="true" /> : null}</span>
                                 <div className={styles.plantMsgBody}>
                                     <span className={styles.plantMsgName}>{m.name}</span>
                                     <span className={styles.plantMsgText}>{m.text}</span>
