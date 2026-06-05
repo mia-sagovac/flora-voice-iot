@@ -7,7 +7,7 @@ const api = axios.create({
     timeout: 15000,
 })
 
-// Attach token to every request if present
+// stavljamo token na svaki request
 api.interceptors.request.use((config) => {
     const token = localStorage.getItem('fv_token')
     if (token) {
@@ -16,7 +16,7 @@ api.interceptors.request.use((config) => {
     return config
 })
 
-// Auto-logout on 401
+// logour na 401
 api.interceptors.response.use(
     (res) => res,
     (err) => {
@@ -31,16 +31,16 @@ api.interceptors.response.use(
 
 export default api
 
-// ─── Auth ─────────────────────────────────────────────
+// auth
 export const login = (username, password) =>
     api.post('/login', new URLSearchParams({ username, password }), {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     })
 
-// ─── Protected test endpoint ─────────────────────────
+// test
 export const fetchTestData = () => api.get('/test')
 
-// ─── Helpers ─────────────────────────────────────────
+// helperi
 export const healthCheck = () => api.get('/')
 
 export const fetchMyDevices = () => api.get('/sensors/devices')

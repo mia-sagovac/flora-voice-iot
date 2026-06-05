@@ -71,7 +71,6 @@
 }
 .navItem.active .navIcon { opacity: 1; }
 
-.navLabel {}
 
 .footer {
   display: flex;
