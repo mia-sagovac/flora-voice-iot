@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
-import { fetchOverview } from '../api/client'
+import { fetchOverview, triggerPump } from '../api/client'
 import { useLiveTelemetry } from '../api/useLiveTelemetry'
 import styles from '../styles/PlantPage.module.css'
+import dashStyles from '../styles/DashboardPage.module.css'
 
 const MESSAGES = [
   { mood: 'thirsty', soil: [0, 25], msgs: [
@@ -36,6 +37,8 @@ export default function PlantPage() {
   const { latest } = useLiveTelemetry()
   const [plants, setPlants] = useState([])
   const [messageIndexByPlant, setMessageIndexByPlant] = useState({})
+  const [wateringNowByPlant, setWateringNowByPlant] = useState({})
+  const [pumpErrorByPlant, setPumpErrorByPlant] = useState({})
 
   useEffect(() => {
     fetchOverview()
@@ -43,6 +46,7 @@ export default function PlantPage() {
         const list = (res.data.devices || []).map(device => ({
           ...device,
           telemetry: device.telemetry || {},
+          displayName: (device.name || '').split('_')[0] || device.name,
         }))
         setPlants(list)
       })
@@ -84,6 +88,17 @@ export default function PlantPage() {
     }))
   }
 
+  const triggerPlantWatering = async (plantId) => {
+    setWateringNowByPlant(prev => ({ ...prev, [plantId]: true }))
+    setPumpErrorByPlant(prev => ({ ...prev, [plantId]: null }))
+    try {
+      await triggerPump(plantId)
+    } catch (e) {
+      setPumpErrorByPlant(prev => ({ ...prev, [plantId]: 'Ne mogu pokrenuti pumpu' }))
+    }
+    setTimeout(() => setWateringNowByPlant(prev => ({ ...prev, [plantId]: false })), 4000)
+  }
+
   return (
     <div className={styles.page}>
       <div className={styles.header}>
@@ -107,11 +122,11 @@ export default function PlantPage() {
                     <BigPlant mood={status.mood} />
                   </div>
                   <div>
-                    <h2 className={styles.plantName}>{plant.name}</h2>
+                    <h2 className={styles.plantName}>{plant.displayName || plant.name}</h2>
                     <div className={styles.plantHealthBadge} style={{ background: `${status.color}22`, color: status.color }}>
                       {status.label}
                     </div>
-                    <div className={styles.sensorInfo}>Senzor: {plant.name}</div>
+                    <div className={styles.sensorInfo}>Senzor: {plant.displayName || plant.name}</div>
                   </div>
                 </div>
 
@@ -144,6 +159,18 @@ export default function PlantPage() {
                   >
                     Sljedeća poruka
                   </button>
+                    <div>
+                      <button
+                        type="button"
+                        className={`${dashStyles.pumpBtn} ${wateringNowByPlant[plant.id] ? dashStyles.pumpActive : ''}`}
+                        onClick={() => triggerPlantWatering(plant.id)}
+                        disabled={wateringNowByPlant[plant.id]}
+                      >
+                        <span className={dashStyles.pumpBtnIcon}><i className="fa-solid fa-droplet" aria-hidden="true" /></span>
+                        <span>{wateringNowByPlant[plant.id] ? 'Pumpa radi...' : 'Zalij biljku'}</span>
+                      </button>
+                      {pumpErrorByPlant[plant.id] && <p style={{ color: 'var(--ember)', fontSize: '0.82rem', marginTop: 8 }}>{pumpErrorByPlant[plant.id]}</p>}
+                    </div>
                 </div>
               </div>
             </article>

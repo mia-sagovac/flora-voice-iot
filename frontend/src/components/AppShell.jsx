@@ -60,7 +60,7 @@ export default function AppShell({ children }) {
     )
 }
 
-// ─── SVG icons ────────────────────────────────────────
+// svg icons
 function LogoIcon() {
     return (
         <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
@@ -72,7 +72,7 @@ function LogoIcon() {
     )
 }
 function DashIcon() {
-    return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+  return <i class="fa-brands fa-dashcube"></i>
 }
 function PlantIcon() {
     return <i className="fa-solid fa-seedling" aria-hidden="true" />

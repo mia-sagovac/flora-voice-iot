@@ -25,7 +25,10 @@ export default function SensorsPage() {
 
     useEffect(() => {
         fetchOverview()
-            .then(res => setPlants(res.data.devices || []))
+            .then(res => {
+                const list = (res.data.devices || []).map(p => ({ ...p, displayName: (p.name || '').split('_')[0] || p.name }))
+                setPlants(list)
+            })
             .catch(() => setPlants([]))
     }, [])
 
@@ -84,7 +87,7 @@ export default function SensorsPage() {
         const rows = []
         visiblePlants.forEach(p => {
             (seriesByPlant[p.id] || []).forEach(({ ts, value }) => {
-                rows.push({ ts, plant: p.name, value })
+                rows.push({ ts, plant: p.displayName || p.name, value })
             })
         })
         return rows.sort((a, b) => b.ts - a.ts).slice(0, 12)
@@ -123,7 +126,7 @@ export default function SensorsPage() {
                             className={`${styles.tab} ${isolated === p.id ? styles.tabActive : ''}`}
                             onClick={() => setIsolated(p.id)}
                         >
-                            {p.name}
+                            {p.displayName || p.name}
                         </button>
                     ))}
                 </div>
@@ -153,11 +156,11 @@ export default function SensorsPage() {
                             />
                             <Legend wrapperStyle={{ fontSize: '0.78rem' }} />
                             {visiblePlants.map(p => (
-                                <Line
+                                    <Line
                                     key={p.id}
                                     type="monotone"
                                     dataKey={p.id}
-                                    name={p.name}
+                                        name={p.displayName || p.name}
                                     stroke={colorOf(p.id)}
                                     strokeWidth={2.5}
                                     dot={false}

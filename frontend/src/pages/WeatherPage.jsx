@@ -83,7 +83,7 @@ export default function WeatherPage() {
     const plantMessages = useMemo(
         () => plants.map(p => ({
             id: p.id,
-            name: p.name,
+            name: (p.name || '').split('_')[0] || p.name,
             soil: p.telemetry?.groundHumidity,
             ...plantWeatherMessage(p.telemetry?.groundHumidity, isRaining, rainSoon),
         })),

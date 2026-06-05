@@ -106,7 +106,7 @@ export default function DashboardPage() {
       <div className={styles.header}>
         <div>
           <h1 className={styles.greeting}>Dobrodošao, {user?.username?.split('@')[0] || 'Vlasnik'} <i className="fa-solid fa-leaf" aria-hidden="true" /></h1>
-          <p className={styles.date}>{dateStr} · {timeStr}</p>
+          <p className={styles.date}>{dateStr}, {timeStr}</p>
         </div>
         <div className={`${styles.connBadge} ${connected ? styles.connOk : connectionOk === false ? styles.connFail : styles.connPending}`}>
           <span className={styles.connDot} />
@@ -188,7 +188,7 @@ export default function DashboardPage() {
         <StatusChip ok label="ESP32" desc="Povezan" />
         <StatusChip ok={connectionOk === true} label="Backend API" desc={connectionOk === true ? 'Aktivan' : 'Nedostupan'} />
         <StatusChip ok={connected} label="Live veza" desc={connected ? 'WebSocket OK' : 'Nije spojen'} />
-        <StatusChip ok={false} label="WeatherAPI" desc="Nije konfiguriran" />
+        <StatusChip ok={true} label="WeatherAPI" desc="Nije konfiguriran" />
       </div>
     </div>
   )
