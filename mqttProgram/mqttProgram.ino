@@ -1,121 +1,182 @@
-// Napišite program za uređaj ESP32 koji se preko WiFi mreže povezuje na MQTT posrednik. Nakon pokretanja
-// programa i povezivanja na WiFi mrežu, osluškuje očitanja pokreta s pripadajućeg PIR ili ultrazvučnog senzora.
-// Kada se dogodi očitanje, uređaj treba poslati MQTT poruku na posrednik o očitanju pokreta s vrijednošću
-// „detected“
-// . Uređaj treba očitavati vrijednost senzora svakih 5 sekundi i ako je posljednje očitanje bilo
-// „detected“, a trenutno nije detektirano ništa, pošaljite vrijednost „clear“. Također, šaljite „detected“ samo
-// ako je posljednje očitanje bilo „clear“.
-
-#include <PubSubClient.h>
 #include <WiFi.h>
 #include <WiFiManager.h>
-#include <ArduinoJson.h>
+#include <PubSubClient.h>
 #include <DHT.h>
+#include <ArduinoJson.h>
 
+#define DHTPIN 4
+#define DHTTYPE DHT11
+#define RELAY_PIN 5
 
-
-
-const char *ssid = "iPhone Adam";
-const char *password = "sw49mfh7s5ppe";
-const char* MQTT_server = "http://161.53.133.253:8080";  
-const int MQTT_port = 1883;
-const char* MQTT_topic = "v1/devices/me/telemetry";
-
-int PIR_OUT_GPIO_pin =4 ;
+// ThingsBoard
+const char* mqtt_server = "161.53.133.253";
+const char* token = "ipLsW8EyaivjtvIkruGS"; // sensor/plant token
 
 WiFiClient espClient;
 PubSubClient client(espClient);
-
-String lastState = "clear";
-unsigned long lastReadTime = 0;
-const unsigned long readInterval = 5000; // 5 sekundi
-// const unsigned long readInterval = 1800000; // 30 minuta
+DHT dht(DHTPIN, DHTTYPE);
 
 
+bool pumpState = false;
+unsigned long pumpOffTime = 0;
+unsigned long lastTelemetryTime = 0;
+const unsigned long TELEMETRY_INTERVAL = 5000; //send every 5 seconds
+
+
+
+void callback(char* topic, byte* payload, unsigned int length) {
+
+  String message = "";
+
+    for (unsigned int i = 0; i < length; i++) {
+      message += (char)payload[i];
+  }
+
+
+  String topicStr = String(topic);
+  String requestId = topicStr.substring(topicStr.lastIndexOf('/') + 1);
+
+  StaticJsonDocument<256> doc;
+  DeserializationError error = deserializeJson(doc, message);
+
+  if (error) {
+    Serial.println("JSON parsing error");
+    return;
+  }
+
+  const char* method = doc["method"] | "";
+  int duration = doc["params"]["duration"] | 0;
+
+  if (strcmp(method, "ON") == 0 || strcmp(method, "setPump") == 0) {
+    pumpState = true;
+  } else if (strcmp(method, "OFF") == 0) {
+    pumpState = false;
+  }
+
+  digitalWrite(RELAY_PIN, pumpState ? HIGH : LOW);
+
+  Serial.print("Pump: ");
+  Serial.println(pumpState ? "ON" : "OFF");
+
+  // timer
+  if (duration > 0 && pumpState) {
+    Serial.print("Pump will run for ");
+    Serial.print(duration);
+    Serial.println(" ms");
+    
+    pumpOffTime = millis() + duration; 
+  } else {
+    pumpOffTime = 0; 
+  }
+
+  String responseTopic = "v1/devices/me/rpc/response/" + requestId;
+  String responsePayload = "{\"status\":\"ok\",\"pump\":" + String(pumpState ? "true" : "false") + "}";
+
+  client.publish(responseTopic.c_str(), responsePayload.c_str());
+  Serial.println("RPC response sent");
+}
+
+// WiFiManager 
+void connectWiFi() {
+
+  WiFiManager wm;
+  Serial.println("Running WiFi Manager...");
+
+  bool res = wm.autoConnect("ESP32-Pump");
+
+  if (!res) {
+    Serial.println("Error connecting to WiFi");
+    delay(3000);
+    ESP.restart();
+  }
+
+  Serial.println("WiFi connected");
+  Serial.print("IP: ");
+  Serial.println(WiFi.localIP());
+}
+
+// MQTT reconnect
+void reconnectMQTT() {
+
+  while (!client.connected()) {
+    Serial.print("Connecting MQTT");
+
+    String clientId = "ESP32-" + String((uint32_t)ESP.getEfuseMac(), HEX);
+
+    if (client.connect(clientId.c_str(), token, NULL)) {
+      Serial.println("connected");
+      client.subscribe("v1/devices/me/rpc/request/+");
+    } else {
+      Serial.print("failed, rc=");
+      Serial.println(client.state());
+      delay(2000);
+    }
+  }
+}
 
 void setup() {
-  // put your setup code here, to run once:
 
-    Serial.begin(115200);
-    pinMode(PIR_OUT_GPIO_pin, INPUT);
+  Serial.begin(115200);
+  delay(2000);
 
-    // ============ CONNECTING TO WIFI =============
-    Serial.printf("[WiFi] Connecting to ");
-    Serial.printf(ssid);
-    // WiFi.begin(ssid, password);
-    WiFiManager wm;
+  dht.begin();
 
-    if (!wm.autoConnect("ESP32_PIR_Setup")) {
-        Serial.println("Spajanje nije uspjelo. Resetiraj uređaj.");
-        ESP.restart();
-    }
+  pinMode(RELAY_PIN, OUTPUT);
+  digitalWrite(RELAY_PIN, LOW);
 
-    Serial.println("WiFi spojen!");
-    client.setServer(MQTT_server, MQTT_port);
+  connectWiFi();
 
+  client.setServer(mqtt_server, 1883);
+  client.setCallback(callback);
 }
 
 void loop() {
-    if (WiFi.status() != WL_CONNECTED) {
-        return;
+
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("WiFi disconnected");
+  }
+
+  if (!client.connected()) {
+    reconnectMQTT();
+  }
+
+
+  client.loop(); 
+
+  // check pump timer
+  if (pumpState && pumpOffTime > 0 && millis() >= pumpOffTime) {
+    digitalWrite(RELAY_PIN, LOW);
+    pumpState = false;
+    pumpOffTime = 0;
+    Serial.println("Pump turned OFF by timer");
+    
+    String payload = "{\"pump\":0}";
+    client.publish("v1/devices/me/telemetry", payload.c_str());
+  }
+
+  //telemetry
+  if (millis() - lastTelemetryTime >= TELEMETRY_INTERVAL) {
+    lastTelemetryTime = millis();
+
+    float t = dht.readTemperature();
+    float h = dht.readHumidity();
+
+    if (isnan(t) || isnan(h)) {
+      Serial.println("DHT error");
+    } else {
+      String payload = "{";
+      payload += "\"temperature\":";
+      payload += String(t);
+      payload += ",";
+      payload += "\"humidity\":";
+      payload += String(h);
+      payload += ",";
+      payload += "\"pump\":";
+      payload += String(digitalRead(RELAY_PIN) ? 1 : 0);
+      payload += "}";
+
+      Serial.println(payload);
+      client.publish("v1/devices/me/telemetry", payload.c_str());
     }
-  // put your main code here, to run repeatedly:
-    if(!client.connected()){
-        while(!client.connected()){
-            String clientID = "CLIENTID";
-            const char* accessToken = "DB7Qn7MI9Fx9Cr98auks";
-
-            if (client.connect(clientID.c_str(), accessToken, NULL)) {
-                Serial.printf("connected\n");
-            } else {
-                Serial.printf("failed: %d\nRetry", client.state());
-                delay(2000);
-                return;
-            }
-        }
-  
-    }
-
-    client.loop();
-
-    unsigned long currentTime = millis();
-
-    if(currentTime - lastReadTime >= readInterval){
-        lastReadTime = currentTime;
-
-        int sensorValue = digitalRead(PIR_OUT_GPIO_pin);
-
-        String currentState;
-
-        if (sensorValue == HIGH) {
-            currentState = "detected";
-        } else {
-            currentState = "clear";
-        }
-
-
-
-        // salje uvijek podatke promijenili se on ili ne
-        String payload = "{\"" + String("motion") + "\":\"" + currentState + "\"}";
-        client.publish(MQTT_topic, payload.c_str());
-        
-        Serial.print("MQTT sent: ");
-        Serial.println(payload);
-        lastState = currentState;
-
-
-    }
+  }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
