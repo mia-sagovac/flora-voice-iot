@@ -1,5 +1,3 @@
-"""Pydantic modeli (request/response sheme)"""
-
 from pydantic import BaseModel
 
 class TokenResponse(BaseModel):
