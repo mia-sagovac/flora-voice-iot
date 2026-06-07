@@ -33,7 +33,6 @@ async def get_sensor_timeseries(
         hours: int = 24,
         token: str = Depends(oauth2_scheme),
 ):
-    """Povijesna telemetrija za graf — zadnjih `hours` sati. TB enforca pristup po tokenu."""
     end_ts = int(time.time() * 1000)
     start_ts = end_ts - hours * 60 * 60 * 1000
     raw = await tb_client.get_timeseries_history(token, device_id, keys, start_ts, end_ts)
@@ -120,7 +119,7 @@ async def list_my_devices(token: str = Depends(oauth2_scheme)):
 
 @router.post("/{device_id}/pump")
 async def trigger_pump(device_id: str, token: str = Depends(oauth2_scheme)):
-    # isto kao i CURL koji smo koristili dok smo koristili dok smo sve ovo testirali (oni u terminalu)
+    # isto kao i CURL koji smo koristili dok smo koristili dok smo sve ovo testirali (ono u terminalu)
     await tb_client.set_device_attributes(token, device_id, {"triggerWatering": True})
     return {"status": "ok", "device_id": device_id}
 
