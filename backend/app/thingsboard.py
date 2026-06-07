@@ -15,7 +15,7 @@ class ThingsBoardClient:
 
     async def login(self, username: str, password: str) -> dict:
         """
-        Salji credentials ThingsBoardu, vrati sirov JSON response.
+        Salji credentials ThingsBoardu, vrati JSON response.
         """
         async with httpx.AsyncClient(timeout=self.timeout) as client: # otvaram http klijenta
             try:
