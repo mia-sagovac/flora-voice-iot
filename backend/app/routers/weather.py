@@ -1,4 +1,4 @@
-"""Weather router — proxy prema Open-Meteo (bez API kljuca)."""
+"""Weather router - proxy prema Open-Meteo (bez API kljuca)."""
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException
