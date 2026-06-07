@@ -16,7 +16,7 @@ from app.routers import weather
 
 app = FastAPI(
     title="FastAPI + ThingsBoard",
-    description="Demo: autentikacija preko ThingsBoarda + zaštićeni endpoint",
+    description="Demo: autentikacija preko ThingsBoarda + zasticeni endpoint",
     version="0.1.0",
 )
 
@@ -36,7 +36,6 @@ app.include_router(weather.router)
 
 @app.get("/", tags=["meta"])
 def root():
-    """Sanity check — pokazuje koji ThingsBoard URL app trenutno koristi."""
     return {
         "message": "FastAPI + ThingsBoard demo",
         "docs": "/docs",
